@@ -19,6 +19,7 @@ namespace SharpIpp.Models
     ///     object MUST reject the request and return the 'client-error-uri-
     ///     scheme-not-supported' status code.
     /// </summary>
+    [Obsolete("This operation is deprecated and should not be used. Use PrintJob instead.")]
     public class PrintUriRequest : IppRequest<PrintUriOperationAttributes>, IIppPrinterRequest
     {
         public JobTemplateAttributes? JobTemplateAttributes { get; set; }

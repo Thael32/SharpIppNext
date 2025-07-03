@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
@@ -6,13 +6,6 @@
     <NullableReferenceTypes>true</NullableReferenceTypes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <PackageIcon>ipp256.png</PackageIcon>
-    <PackageIconUrl />
-    <PackageProjectUrl>https://github.com/danielklecha/SharpIppNext</PackageProjectUrl>
-    <Authors>Daniel Klecha;Evgeny Zelenov</Authors>
-    <Description>C# implementation of IPP client and IPP server</Description>
-    <PackageTags>ipp, Internet Printing Protocol, rfc2911, print, printer, cups</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 	<PackageLicenseFile></PackageLicenseFile>
     <Copyright>Daniel Klecha and Evgeny Zelenov</Copyright>
@@ -20,10 +13,19 @@
     <RepositoryType>git</RepositoryType>
 	<Product>SharpIppNext</Product>
 	<PackageId>SharpIppNext</PackageId>
-	<Version>1.0.0.0</Version>
 	<IncludeSymbols>true</IncludeSymbols>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;0612</NoWarn>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningLevel>8</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;0612</NoWarn>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <WarningLevel>8</WarningLevel>
   </PropertyGroup>
    <ItemGroup>
     <None Include="..\ipp256.png">

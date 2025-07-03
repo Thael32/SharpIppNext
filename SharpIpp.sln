@@ -10,6 +10,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpIppTests", "SharpIppTests\SharpIppTests.csproj", "{918F0853-35FC-4283-B9A6-9346837CE41A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6228B57D-8C9C-4130-B0B5-35AC84093DBB}"
+	ProjectSection(SolutionItems) = preProject
+		Global.props = Global.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

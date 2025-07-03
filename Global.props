@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+  <PropertyGroup>
+    <VersionPrefix>2.1.4</VersionPrefix>
+    <PackageIcon>ipp256.png</PackageIcon>
+    <PackageIconUrl />
+    <PackageProjectUrl>https://github.com/danielklecha/SharpIppNext</PackageProjectUrl>
+    <Authors>Daniel Klecha;Evgeny Zelenov</Authors>
+    <Description>C# implementation of IPP client and IPP server</Description>
+    <PackageTags>ipp, Internet Printing Protocol, rfc2911, print, printer, cups</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

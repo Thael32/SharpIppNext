@@ -19,6 +19,7 @@ namespace SharpIpp.Models
     ///     using a Send-URI operation with no "document-uri" operation
     ///     attribute).
     /// </summary>
+    [Obsolete("This operation is deprecated and should not be used. Use SendDocument instead.")]
     public class SendUriRequest : IppRequest<SendUriOperationAttributes>, IIppJobRequest
     {
 
