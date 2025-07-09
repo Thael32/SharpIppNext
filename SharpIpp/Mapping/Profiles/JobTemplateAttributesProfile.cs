@@ -110,7 +110,7 @@ namespace SharpIpp.Mapping.Profiles
                 dst.PrinterResolution = map.MapFromDic<Resolution?>(jobDict, JobAttribute.PrinterResolution);
                 dst.PrintQuality = map.MapFromDic<PrintQuality?>(jobDict, JobAttribute.PrintQuality);
                 dst.PrintScaling = map.MapFromDic<PrintScaling?>(jobDict, JobAttribute.PrintScaling);
-                dst.PrintColorMode = map.MapFromDic<PrintColorMode?>(jobDict, JobAttribute.PrintScaling);
+                dst.PrintColorMode = map.MapFromDic<PrintColorMode?>(jobDict, JobAttribute.PrintColorMode);
                 var additionalOperationAttributes = src.OperationAttributes.Where( x => !JobAttribute.GetAttributes( src.Version ).Contains( x.Name ) ).ToArray();
                 if (additionalOperationAttributes.Length > 0)
                     dst.AdditionalOperationAttributes = additionalOperationAttributes;
