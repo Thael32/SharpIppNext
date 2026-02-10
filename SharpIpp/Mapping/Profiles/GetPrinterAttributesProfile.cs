@@ -62,6 +62,7 @@ namespace SharpIpp.Mapping.Profiles
                     CompressionSupported =
                         map.MapFromDicSetNull<Compression[]?>(src, PrinterAttribute.CompressionSupported),
                     DocumentFormatDefault = map.MapFromDic<string?>(src, PrinterAttribute.DocumentFormatDefault),
+                    DocumentFormatPreferred = map.MapFromDic<string?>(src, PrinterAttribute.DocumentFormatPreferred),
                     DocumentFormatSupported =
                         map.MapFromDicSetNull<string[]?>(src, PrinterAttribute.DocumentFormatSupported),
                     GeneratedNaturalLanguageSupported =
@@ -154,6 +155,8 @@ namespace SharpIpp.Mapping.Profiles
                         dic.Add( PrinterAttribute.CompressionSupported, src.CompressionSupported.Select( x => new IppAttribute( Tag.Keyword, PrinterAttribute.CompressionSupported, map.Map<string>( x ) ) ).ToArray() );
                     if ( src.DocumentFormatDefault != null )
                         dic.Add( PrinterAttribute.DocumentFormatDefault, new IppAttribute[] { new IppAttribute( Tag.MimeMediaType, PrinterAttribute.DocumentFormatDefault, src.DocumentFormatDefault ) } );
+                    if ( src.DocumentFormatPreferred != null )
+                        dic.Add(PrinterAttribute.DocumentFormatPreferred, new IppAttribute[] { new IppAttribute(Tag.MimeMediaType, PrinterAttribute.DocumentFormatPreferred, src.DocumentFormatPreferred) });
                     if ( src.DocumentFormatSupported?.Any() ?? false )
                         dic.Add( PrinterAttribute.DocumentFormatSupported, src.DocumentFormatSupported.Select( x => new IppAttribute( Tag.MimeMediaType, PrinterAttribute.DocumentFormatSupported, x ) ).ToArray() );
                     if ( src.GeneratedNaturalLanguageSupported?.Any() ?? false )

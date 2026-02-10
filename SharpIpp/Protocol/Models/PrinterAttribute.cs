@@ -25,6 +25,7 @@ namespace SharpIpp.Protocol.Models
         public const string NaturalLanguageConfigured = "natural-language-configured";
         public const string GeneratedNaturalLanguageSupported = "generated-natural-language-supported";
         public const string DocumentFormatDefault = "document-format-default";
+        public const string DocumentFormatPreferred = "document-format-preferred";
         public const string DocumentFormatSupported = "document-format-supported";
         public const string PrinterIsAcceptingJobs = "printer-is-accepting-jobs";
         public const string QueuedJobCount = "queued-job-count";

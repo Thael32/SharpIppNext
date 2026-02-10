@@ -114,6 +114,11 @@ namespace SharpIpp.Models
         public string? DocumentFormatDefault { get; set; }
 
         /// <summary>
+        ///     document-format-preferred
+        /// </summary>
+        public string? DocumentFormatPreferred { get; set; }
+
+        /// <summary>
         ///     document-format-supported
         /// </summary>
         public string[]? DocumentFormatSupported { get; set; }
