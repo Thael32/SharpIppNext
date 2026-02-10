@@ -47,6 +47,8 @@ namespace SharpIpp.Protocol.Models
         public const string PrintScalingDefault = "print-scaling-default";
         public const string MediaDefault = "media-default";
         public const string MediaSupported = "media-supported";
+        public const string MediaTypeSupported = "media-type-supported";
+        public const string MediaReady = "media-ready";
         public const string SidesDefault = "sides-default";
         public const string SidesSupported = "sides-supported";
         public const string FinishingsDefault = "finishings-default";

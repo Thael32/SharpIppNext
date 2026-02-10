@@ -114,6 +114,8 @@ namespace SharpIpp.Mapping.Profiles
                         map.MapFromDicSetNull<UriSecurity[]?>(src, PrinterAttribute.UriSecuritySupported),
                     MediaDefault = map.MapFromDic<string?>(src, PrinterAttribute.MediaDefault),
                     MediaSupported = map.MapFromDicSetNull<string[]?>( src, PrinterAttribute.MediaSupported ),
+                    MediaTypeSupported = map.MapFromDicSetNull<string[]?>(src, PrinterAttribute.MediaTypeSupported),
+                    MediaReady = map.MapFromDicSetNull<string[]?>(src, PrinterAttribute.MediaReady),
                     SidesDefault = map.MapFromDic<Sides?>( src, PrinterAttribute.SidesDefault ),
                     SidesSupported = map.MapFromDicSetNull<Sides[]?>( src, PrinterAttribute.SidesSupported ),
                     FinishingsDefault = map.MapFromDic<Finishings?>( src, PrinterAttribute.FinishingsDefault ),
@@ -228,6 +230,10 @@ namespace SharpIpp.Mapping.Profiles
                         dic.Add( PrinterAttribute.MediaDefault, new IppAttribute[] { new IppAttribute( Tag.Keyword, PrinterAttribute.MediaDefault, src.MediaDefault ) } );
                     if ( src.MediaSupported?.Any() ?? false )
                         dic.Add( PrinterAttribute.MediaSupported, src.MediaSupported.Select( x => new IppAttribute( Tag.Keyword, PrinterAttribute.MediaSupported, x ) ).ToArray() );
+                    if ( src.MediaTypeSupported?.Any() ?? false )
+                        dic.Add(PrinterAttribute.MediaTypeSupported, src.MediaTypeSupported.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.MediaTypeSupported, x)).ToArray());
+                    if ( src.MediaSupported?.Any() ?? false )
+                        dic.Add(PrinterAttribute.MediaReady, src.MediaReady.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.MediaReady, x)).ToArray());
                     if ( src.SidesDefault != null )
                         dic.Add( PrinterAttribute.SidesDefault, new IppAttribute[] { new IppAttribute( Tag.Keyword, PrinterAttribute.SidesDefault, map.Map<string>( src.SidesDefault ) ) } );
                     if ( src.SidesSupported?.Any() ?? false )

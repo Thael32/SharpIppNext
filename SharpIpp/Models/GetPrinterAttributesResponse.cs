@@ -219,6 +219,10 @@ namespace SharpIpp.Models
 
         public string[]? MediaSupported { get; set; }
 
+        public string[]? MediaTypeSupported { get; set; }
+
+        public string[]? MediaReady { get; set; }
+
         public Sides? SidesDefault { get; set; }
 
         public Sides[]? SidesSupported { get; set; }

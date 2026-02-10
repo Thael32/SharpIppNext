@@ -4,7 +4,24 @@ using SharpIpp.Protocol.Models;
 
 try
 {
-    var client = new SharpIppClient();
+    var httpClient = new HttpClient(new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    });
+    var client = new SharpIppClient(httpClient);
+    var request = new GetPrinterAttributesRequest()
+    {
+        OperationAttributes = new GetPrinterAttributesOperationAttributes
+        {
+            PrinterUri = new Uri("ipp://192.168.0.197:631/ipp/print")
+        }
+    };
+
+    var response = await client.GetPrinterAttributesAsync(request);
+    var text = System.Text.Json.JsonSerializer.Serialize(response);
+    Console.WriteLine(text);
+
+    /*
     var filePath = @"C:\example.pdf";
     await using var stream = File.Open(filePath, FileMode.Open);
     var printJobRequest = new PrintJobRequest
@@ -34,6 +51,7 @@ try
         }
     };
     var printJobresponse = await client.PrintJobAsync(printJobRequest);
+    */
     Console.WriteLine("Success!");
 }
 catch (Exception ex)
