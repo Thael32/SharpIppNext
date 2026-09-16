@@ -2,7 +2,7 @@
 <Project>
 
   <PropertyGroup>
-    <VersionPrefix>2.2.1</VersionPrefix>
+    <VersionPrefix>4.2.4</VersionPrefix>
     <PackageIcon>ipp256.png</PackageIcon>
     <PackageIconUrl />
     <PackageProjectUrl>https://github.com/danielklecha/SharpIppNext</PackageProjectUrl>
