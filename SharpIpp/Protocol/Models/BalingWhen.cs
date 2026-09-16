@@ -1,0 +1,24 @@
+namespace SharpIpp.Protocol.Models;
+
+/// <summary>
+/// Specifies when Media Sheets are baled.
+/// See: PWG 5100.1-2022 Section 5.2.1.2
+/// </summary>
+public readonly record struct BalingWhen(string Value, bool IsValue = true) : ISmartEnum 
+{
+    /// <summary>
+    /// Baling occurs after the entire job is complete.
+    /// See: PWG 5100.1-2022 Section 5.2.1.2
+    /// </summary>
+    public static readonly BalingWhen AfterJob = new("after-job");
+
+    /// <summary>
+    /// Baling occurs after each set of copies.
+    /// See: PWG 5100.1-2022 Section 5.2.1.2
+    /// </summary>
+    public static readonly BalingWhen AfterSets = new("after-sets");
+
+    public override string ToString() => Value;
+    public static implicit operator string(BalingWhen bin) => bin.Value;
+    public static implicit operator BalingWhen(string value) => value is null ? throw new System.ArgumentNullException(nameof(value)) : new(value);
+}

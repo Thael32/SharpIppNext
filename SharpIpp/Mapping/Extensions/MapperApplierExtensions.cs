@@ -1,48 +1,107 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 using SharpIpp.Protocol.Models;
 
-namespace SharpIpp.Mapping
+namespace SharpIpp.Mapping.Extensions;
+
+public static class MapperApplierExtensions
 {
-    internal static class MapperApplierExtensions
+    public static TDestination MapFromDicSet<TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key) where TDestination : IEnumerable?
     {
+        if (!src.ContainsKey(key))
+            return mapper.Map<TDestination>(null);
+        var values = src[key].Select(x => x.Value).ToArray();
+        if (values.Length == 0)
+            return mapper.Map<TDestination>(null);
+        return mapper.Map<TDestination>(values);
+    }
 
-        public static TDestination MapFromDicSet<TDestination>(
-            this IMapperApplier mapper,
-            IDictionary<string, IppAttribute[]> src,
-            string key) where TDestination : IEnumerable
+    public static TDestination? MapFromDicSetNullable<TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key) where TDestination : IEnumerable?
+    {
+        if (!src.ContainsKey(key))
+            return mapper.MapNullable<TDestination>(null);
+        var values = src[key].Select(x => x.Value).ToArray();
+        if (values.Length == 0)
+            return mapper.MapNullable<TDestination>(null);
+        return mapper.MapNullable<TDestination>(values);
+    }
+
+    public static TDestination MapFromDic<TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key)
+    {
+        if (!src.TryGetValue(key, out IppAttribute[]? values))
+            return mapper.Map<TDestination>(null);
+        if (values.Length == 0)
+            return mapper.Map<TDestination>(null);
+        return mapper.Map<TDestination>(values[0].Value);
+    }
+
+    public static TDestination? MapFromDicNullable<TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key)
+    {
+        if (!src.TryGetValue(key, out IppAttribute[]? values))
+            return mapper.MapNullable<TDestination>(null);
+        if (values.Length == 0)
+            return mapper.MapNullable<TDestination>(null);
+        return mapper.MapNullable<TDestination>(values[0].Value);
+    }
+
+    public static TDestination? MapFromDicNullable<TPartial, TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key,
+        Func<IppAttribute, TPartial, TDestination?> factory)
+    {
+        if (!src.TryGetValue(key, out IppAttribute[]? values))
+            return mapper.MapNullable<TDestination>(null);
+        if (values.Length == 0)
+            return mapper.MapNullable<TDestination>(null);
+
+        var partial = mapper.MapNullable<TPartial>(values[0].Value);
+        if (partial is null)
+            return mapper.MapNullable<TDestination>(null);
+
+        return factory(values[0], partial);
+    }
+
+    public static TDestination[]? MapFromDicSetNullable<TPartial, TDestination>(
+        this IMapperApplier mapper,
+        IDictionary<string, IppAttribute[]> src,
+        string key,
+        Func<IppAttribute, TPartial, TDestination?> factory)
+    {
+        if (!src.TryGetValue(key, out IppAttribute[]? values))
+            return mapper.MapNullable<TDestination[]?>(null);
+        if (values.Length == 0)
+            return mapper.MapNullable<TDestination[]?>(null);
+
+        var result = new List<TDestination>(values.Length);
+        foreach (var attribute in values)
         {
-            var mapKey = !src.ContainsKey(key) ? (object)NoValue.Instance : src[key].Select(x => x.Value).ToArray();
-            return mapper.Map<TDestination>(mapKey);
+            var partial = mapper.MapNullable<TPartial>(attribute.Value);
+            if (partial is null)
+                return mapper.MapNullable<TDestination[]?>(null);
+
+            var destination = factory(attribute, partial);
+            if (destination is null)
+                return mapper.MapNullable<TDestination[]?>(null);
+
+            result.Add(destination);
         }
 
-
-        public static TDestination MapFromDicSetNull<TDestination>(
-            this IMapperApplier mapper,
-            IDictionary<string, IppAttribute[]> src,
-            string key) where TDestination : IEnumerable?
-        {
-            var mapKey = !src.ContainsKey(key) ? (object)NoValue.Instance : src[key].Select(x => x.Value).ToArray();
-            return mapper.Map<TDestination>(mapKey);
-        }
-
-        public static TDestination MapFromDic<TDestination>(
-            this IMapperApplier mapper,
-            IDictionary<string, IppAttribute[]> src,
-            string key)
-        {
-            var mapKey = !src.ContainsKey(key) ? NoValue.Instance : src[key].First().Value;
-            return mapper.Map<TDestination>(mapKey);
-        }
-
-        public static string? MapFromDicLanguage(
-            this IMapperApplier mapper,
-            IDictionary<string, IppAttribute[]> src,
-            string key)
-        {
-            return mapper.MapFromDic<StringWithLanguage?>(src, key)?.Language;
-        }
+        return result.ToArray();
     }
 }

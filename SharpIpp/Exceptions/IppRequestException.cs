@@ -1,4 +1,4 @@
-﻿using SharpIpp.Protocol;
+using SharpIpp.Protocol;
 using SharpIpp.Protocol.Models;
 using System;
 using System.Collections.Generic;
@@ -11,14 +11,6 @@ namespace SharpIpp.Exceptions
     public class IppRequestException : Exception
     {
         public IppRequestException( IIppRequestMessage requestMessage )
-        {
-            RequestMessage = requestMessage;
-        }
-
-        protected IppRequestException(
-            SerializationInfo info,
-            StreamingContext context,
-            IIppRequestMessage requestMessage ) : base( info, context )
         {
             RequestMessage = requestMessage;
         }

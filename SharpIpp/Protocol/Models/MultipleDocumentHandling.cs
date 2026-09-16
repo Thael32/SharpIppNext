@@ -1,53 +1,37 @@
-﻿namespace SharpIpp.Protocol.Models
+namespace SharpIpp.Protocol.Models
 {
-    public enum MultipleDocumentHandling
+    /// <summary>
+    /// Specifies the multiple-document-handling attribute, which controls how multiple documents in a job are handled.
+    /// See: RFC 8011 Section 5.2.4
+    /// </summary>
+    public readonly record struct MultipleDocumentHandling(string Value, bool IsValue = true) : ISmartEnum
     {
-        Unsupported,
+        /// <summary>
+        /// All documents in the job are treated as a single document for finishing and output.
+        /// See: RFC 8011 Section 5.2.4
+        /// </summary>
+        public static readonly MultipleDocumentHandling SingleDocument = new("single-document");
 
-        /// 'single-document': If a Job object has multiple documents, say,
-        /// the document data is called a and b, then the result of
-        /// processing all the document data (a and then b) MUST be treated
-        /// as a single sequence of media sheets for finishing operations;
-        /// that is, finishing would be performed on the concatenation of
-        /// the sequences a(*),b(*).  The Printer object MUST NOT force the
-        /// data in each document instance to be formatted onto a new
-        /// print-stream page, nor to start a new impression on a new media
-        /// sheet. If more than one copy is made, the ordering of the sets
-        /// of media sheets resulting from processing the document data
-        /// MUST be a(*), b(*), a(*), b(*), start on a new media sheet.
-        SingleDocument,
+        /// <summary>
+        /// Each document in the job is treated as a separate document; copies are not collated across documents.
+        /// See: RFC 8011 Section 5.2.4
+        /// </summary>
+        public static readonly MultipleDocumentHandling SeparateDocumentsUncollatedCopies = new("separate-documents-uncollated-copies");
 
-        /// 'separate-documents-uncollated-copies': If a Job object has
-        /// multiple documents, say, the document data is called a and b,
-        /// then the result of processing the data in each document
-        /// instance MUST be treated as a single sequence of media sheets
-        /// for finishing operations; that is, the sets a(*) and b(*) would
-        /// each be finished separately. The Printer object MUST force each
-        /// copy of the result of processing the data in a single document
-        /// to start on a new media sheet. If more than one copy is made,
-        /// the ordering of the sets of media sheets resulting from
-        /// processing the document data MUST be a(*), a(*), ..., b(*),
-        /// b(*) ... .
-        SeparateDocumentsUncollatedCopies,
+        /// <summary>
+        /// Each document in the job is treated as a separate document; copies are collated within each document.
+        /// See: RFC 8011 Section 5.2.4
+        /// </summary>
+        public static readonly MultipleDocumentHandling SeparateDocumentsCollatedCopies = new("separate-documents-collated-copies");
 
-        /// 'separate-documents-collated-copies': If a Job object has multiple
-        /// documents, say, the document data is called a and b, then the
-        /// result of processing the data in each document instance MUST be
-        /// treated as a single sequence of media sheets for finishing
-        /// operations; that is, the sets a(*) and b(*) would each be
-        /// finished separately. The Printer object MUST force each copy of
-        /// the result of processing the data in a single document to start
-        /// on a new media sheet.  If more than one copy is made, the
-        /// ordering of the sets of media sheets resulting from processing
-        /// the document data MUST be a(*), b(*), a(*), b(*), ... .
-        SeparateDocumentsCollatedCopies,
+        /// <summary>
+        /// All documents in the job are treated as a single document for finishing, but each document starts on a new sheet.
+        /// See: RFC 8011 Section 5.2.4
+        /// </summary>
+        public static readonly MultipleDocumentHandling SingleDocumentNewSheet = new("single-document-new-sheet");
 
-        /// 'single-document-new-sheet':  Same as 'single-document', except
-        /// that the Printer object MUST ensure that the first impression
-        /// of each document instance in the job is placed on a new media
-        /// sheet.  This value allows multiple documents to be stapled
-        /// together with a single staple where each document starts on a
-        /// new sheet.
-        SingleDocumentNewSheet,
+        public override string ToString() => Value;
+        public static implicit operator string(MultipleDocumentHandling bin) => bin.Value;
+        public static implicit operator MultipleDocumentHandling(string value) => value is null ? throw new System.ArgumentNullException(nameof(value)) : new(value);
     }
 }

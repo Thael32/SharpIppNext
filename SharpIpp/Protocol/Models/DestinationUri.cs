@@ -1,0 +1,17 @@
+using System;
+
+namespace SharpIpp.Protocol.Models;
+
+/// <summary>
+/// The <c>destination-uris</c> member collection.
+/// See: PWG 5100.15-2013 Section 7.4.10
+/// </summary>
+public class DestinationUri : IIppCollection
+{
+    bool INoValueWritable.IsValue { get; set; } = true;
+    bool INoValue.IsValue => ((INoValueWritable)this).IsValue;
+    public Uri? DestinationUriValue { get; set; }
+    public string? PostDialString { get; set; }
+    public string? PreDialString { get; set; }
+    public int? T33Subaddress { get; set; }
+}

@@ -1,38 +1,21 @@
-﻿using SharpIpp.Mapping;
-using SharpIpp.Protocol.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
+using SharpIpp.Validation;
 
 namespace SharpIpp.Protocol.Models;
-public class MediaSize
+public class MediaSize : IIppCollection
 {
-    /// <summary>
-    /// integer(0:MAX))
-    /// </summary>
-    public int? XDimension { get; set; }
+    /// <inheritdoc />
+    bool INoValueWritable.IsValue { get; set; } = true;
+    bool INoValue.IsValue => ((INoValueWritable)this).IsValue;
 
     /// <summary>
-    /// integer(0:MAX))
+    /// integer(1:MAX) | rangeOfInteger(1:MAX)
     /// </summary>
-    public int? YDimension { get; set; }
+    [IppRange(1, int.MaxValue)]
+    public Range? XDimension { get; set; }
 
-    public IEnumerable<IppAttribute> GetIppAttributes(IMapperApplier mapper)
-    {
-        if (XDimension.HasValue)
-            yield return new IppAttribute(Tag.Integer, nameof(XDimension).ConvertCamelCaseToDash(), XDimension.Value);
-        if (YDimension.HasValue)
-            yield return new IppAttribute(Tag.Integer, nameof(YDimension).ConvertCamelCaseToDash(), YDimension.Value);
-    }
-
-    public static MediaSize Create(Dictionary<string, IppAttribute[]> dict, IMapperApplier mapper)
-    {
-        return new MediaSize
-        {
-            XDimension = mapper.MapFromDic<int?>(dict, nameof(XDimension).ConvertCamelCaseToDash()),
-            YDimension = mapper.MapFromDic<int?>(dict, nameof(YDimension).ConvertCamelCaseToDash())
-        };
-    }
+    /// <summary>
+    /// integer(0:MAX) | rangeOfInteger(0:MAX)
+    /// </summary>
+    [IppRange(0, int.MaxValue)]
+    public Range? YDimension { get; set; }
 }

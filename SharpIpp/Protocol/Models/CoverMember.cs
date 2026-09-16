@@ -1,0 +1,30 @@
+namespace SharpIpp.Protocol.Models;
+
+/// <summary>
+/// Specifies member attribute names supported by <code>cover-back-supported</code> and <code>cover-front-supported</code>.
+/// See: PWG 5100.3-2023 Sections 5.3.2 and 5.3.4
+/// </summary>
+public readonly record struct CoverMember(string Value, bool IsValue = true) : ISmartEnum 
+{
+    /// <summary>
+    /// The cover-type member attribute.
+    /// See: PWG 5100.3-2023 Section 5.2.1.3
+    /// </summary>
+    public static readonly CoverMember CoverType = new("cover-type");
+
+    /// <summary>
+    /// The media member attribute.
+    /// See: PWG 5100.3-2023 Section 5.3.2
+    /// </summary>
+    public static readonly CoverMember Media = new("media");
+
+    /// <summary>
+    /// The media-col member attribute.
+    /// See: PWG 5100.3-2023 Section 5.3.2
+    /// </summary>
+    public static readonly CoverMember MediaCol = new("media-col");
+
+    public override string ToString() => Value;
+    public static implicit operator string(CoverMember value) => value.Value;
+    public static implicit operator CoverMember(string value) => value is null ? throw new System.ArgumentNullException(nameof(value)) : new(value);
+}

@@ -1,0 +1,24 @@
+namespace SharpIpp.Protocol.Models;
+
+/// <summary>
+/// Specifies whether sheets are pushed outward or pulled inward for the fold.
+/// See: PWG 5100.1-2022 Section 5.2.6.1
+/// </summary>
+public readonly record struct FoldingDirection(string Value, bool IsValue = true) : ISmartEnum 
+{
+    /// <summary>
+    /// Sheets are folded inward (toward the center).
+    /// See: PWG 5100.1-2022 Section 5.2.6.1
+    /// </summary>
+    public static readonly FoldingDirection Inward = new("inward");
+
+    /// <summary>
+    /// Sheets are folded outward (away from the center).
+    /// See: PWG 5100.1-2022 Section 5.2.6.1
+    /// </summary>
+    public static readonly FoldingDirection Outward = new("outward");
+
+    public override string ToString() => Value;
+    public static implicit operator string(FoldingDirection bin) => bin.Value;
+    public static implicit operator FoldingDirection(string value) => value is null ? throw new System.ArgumentNullException(nameof(value)) : new(value);
+}

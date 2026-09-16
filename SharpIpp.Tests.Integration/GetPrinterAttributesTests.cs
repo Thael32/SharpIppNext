@@ -1,0 +1,715 @@
+using SharpIpp;
+using SharpIpp.Models.Requests;
+using SharpIpp.Models.Responses;
+using SharpIpp.Protocol;
+using SharpIpp.Protocol.Models;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using Range = SharpIpp.Protocol.Models.Range;
+
+namespace SharpIpp.Tests.Integration;
+
+[TestClass]
+[ExcludeFromCodeCoverage]
+public class GetPrinterAttributesTests : SharpIppIntegrationTestBase
+{
+    [TestMethod()]
+    public async Task GetPrinterAttributesAsync_WhenSendingStream_ServerReceivesSameRequestAndReturnsExpectedResponse()
+    {
+        SharpIppServer server = new();
+        GetPrinterAttributesRequest clientRequest = new()
+        {
+            RequestId = 123,
+            Version = new IppVersion(2, 0),
+            OperationAttributes = new()
+            {
+                PrinterUri = new Uri("http://127.0.0.1:631"),
+                AttributesCharset = Charset.Utf8,
+                AttributesNaturalLanguage = "en-us",
+                RequestingUserName = "test-user",
+                RequestedAttributes = ["printer-uri", "printer-state", "printer-name"],
+                DocumentFormat = DocumentFormat.ApplicationPdf,
+                FirstIndex = 1,
+                Limit = 10,
+                PrinterId = 42,
+            },
+        };
+        IIppRequest? serverRequest = null;
+        GetPrinterAttributesResponse? serverResponse = null;
+        HttpStatusCode statusCode = HttpStatusCode.OK;
+        async Task<HttpResponseMessage> func(Stream s, CancellationToken c)
+        {
+            serverRequest = await server.ReceiveRequestAsync(s, c);
+                serverResponse = new GetPrinterAttributesResponse
+                {
+                    RequestId = serverRequest.RequestId,
+                    Version = serverRequest.Version,
+                    StatusCode = IppStatusCode.SuccessfulOk,
+                    PrinterAttributes = new()
+                    {
+                        PrinterUriSupported = new[] { new Uri("http://127.0.0.1:631") },
+                        UriSecuritySupported = new[] { UriSecurity.None },
+                        UriAuthenticationSupported = new[] { UriAuthentication.None },
+                        PrinterName = "Test Printer",
+                        PrinterLocation = "Office",
+                        PrinterInfo = "Test Printer Info",
+                        PrinterMoreInfo = new Uri("http://127.0.0.1:631"),
+                        PrinterDriverInstaller = new Uri("installer", UriKind.RelativeOrAbsolute),
+                        PrinterMakeAndModel = "SharpIpp Virtual Printer",
+                        PrinterMoreInfoManufacturer = new Uri("http://manufacturer.com"),
+                        PrinterState = PrinterState.Idle,
+                        PrinterStateReasons = new[] { PrinterStateReason.None, PrinterStateReason.BanderAdded },
+                        PrinterStateMessage = "Idle",
+                        PrinterStateChangeTime = 123,
+                        PrinterStateChangeDateTime = new DateTimeOffset(2024, 01, 02, 3, 4, 5, TimeSpan.Zero),
+                        PrinterDetailedStatusMessages = new[] { "detailed-1" },
+                        MaxClientInfoSupported = 16,
+                        PrinterConfigChangeTime = 456,
+                        PrinterConfigChangeDateTime = new DateTimeOffset(2024, 01, 02, 3, 4, 6, TimeSpan.Zero),
+                        MultipleOperationTimeOut = 60,
+                        MultipleOperationTimeOutAction = MultipleOperationTimeOutAction.AbortJob,
+                        IppVersionsSupported = new IppVersion[] { new IppVersion(1,1) },
+                        OperationsSupported = new[] { IppOperation.PrintJob },
+                        MultipleDocumentJobsSupported = true,
+                        MultipleDocumentHandlingDefault = MultipleDocumentHandling.SeparateDocumentsUncollatedCopies,
+                        MultipleDocumentHandlingSupported = new[] { MultipleDocumentHandling.SeparateDocumentsUncollatedCopies, MultipleDocumentHandling.SingleDocument },
+                        CharsetConfigured = "utf-8",
+                        CharsetSupported = new[] { "utf-8" },
+                        NaturalLanguageConfigured = "en-us",
+                        GeneratedNaturalLanguageSupported = ["en-us"],
+                        DocumentFormatDefault = "application/pdf",
+                        DocumentFormatSupported = new[] { "application/pdf" },
+                        PrinterIsAcceptingJobs = true,
+                        QueuedJobCount = 0,
+                        PrinterMessageFromOperator = "message",
+                        ColorSupported = true,
+                        ReferenceUriSchemesSupported = new[] { UriScheme.Ftp },
+                        PdlOverrideSupported = PdlOverride.Attempted,
+                        OverridesSupported = [OverrideSupported.Pages, OverrideSupported.DocumentNumbers, OverrideSupported.Sides],
+                        PrinterUpTime = 100,
+                        PrinterCurrentTime = new DateTimeOffset(2024, 1, 1, 1, 1, 1, TimeSpan.Zero),
+                        JpegKOctetsSupported = new Range(1, 8),
+                        PdfKOctetsSupported = new Range(1, 16),
+                        PagesPerMinute = 10,
+                        PagesPerMinuteColor = 10,
+                        PrinterResolutionDefault = new Resolution(600, 600, ResolutionUnit.DotsPerInch),
+                        PrintQualityDefault = PrintQuality.Normal,
+                        PrintColorModeDefault = PrintColorMode.Color,
+                        WhichJobsSupported = new[] { WhichJobs.Completed },
+                        PrintScalingDefault = PrintScaling.Fit,
+                        PrintScalingSupported = new[] { PrintScaling.Fit, PrintScaling.None },
+                        MediaDefault = Media.IsoA4210x297mm,
+                        MediaSupported = new[] { Media.IsoA4210x297mm },
+                        MediaReady = new[] { Media.IsoA4210x297mm },
+                        SidesDefault = Sides.OneSided,
+                        SidesSupported = new[] { Sides.OneSided, Sides.TwoSidedLongEdge },
+                        FinishingsDefault = Finishings.None,
+                        FinishingsSupported = new[] { Finishings.None },
+                        PrinterResolutionSupported = new[] { new Resolution(600, 600, ResolutionUnit.DotsPerInch) },
+                        PrintQualitySupported = new[] { PrintQuality.Normal },
+                        JobPriorityDefault = 50,
+                        JobPrioritySupported = 100,
+                        CopiesDefault = 1,
+                        CopiesSupported = new Range(1, 100),
+                        OrientationRequestedDefault = Orientation.Portrait,
+                        OrientationRequestedSupported = new[] { Orientation.Portrait, Orientation.Landscape },
+                        PageRangesSupported = true,
+                        JobHoldUntilDefault = JobHoldUntil.NoHold,
+                        JobHoldUntilSupported = new[] { JobHoldUntil.NoHold },
+                        JobHoldUntilTimeSupported = true,
+                        JobDelayOutputUntilDefault = JobHoldUntil.NoHold,
+                        JobDelayOutputUntilSupported = new[] { JobHoldUntil.NoHold },
+                        JobDelayOutputUntilTimeSupported = new Range(0, 3600),
+                        JobHistoryAttributesConfigured = new[] { (JobHistoryAttribute)"attribute1" },
+                        JobHistoryAttributesSupported = new[] { (JobHistoryAttribute)"attribute1" },
+                        JobHistoryIntervalConfigured = 60,
+                        JobHistoryIntervalSupported = new Range(0, 3600),
+                        JobRetainUntilDefault = JobHoldUntil.NoHold,
+                        JobRetainUntilIntervalDefault = 3600,
+                        JobRetainUntilIntervalSupported = new Range(0, 86400),
+                        JobRetainUntilSupported = new[] { JobHoldUntil.NoHold },
+                        JobRetainUntilTimeSupported = true,
+                        OutputBinDefault = OutputBin.Auto,
+                        OutputBinSupported = new[] { OutputBin.Auto },
+                        MediaColDefault = new MediaCol { MediaSizeName = Media.IsoA4210x297mm },
+                        MediaColDatabase = new[] { new MediaCol { MediaSizeName = Media.IsoA4210x297mm } },
+                        MediaColReady = new[] { new MediaCol { MediaSizeName = Media.IsoA4210x297mm } },
+                        MaterialsColDatabase = new[] { new Material { MaterialKey = (MaterialKey?)"db-key" } },
+                        MaterialsColDefault = new[] { new Material { MaterialKey = (MaterialKey?)"def-key" } },
+                        MaterialsColReady = new[] { new Material { MaterialKey = (MaterialKey?)"ready-key" } },
+                        InputMediaSupported = new[] { Media.IsoA4210x297mm },
+                        MediaColSupported = new[] { MediaColMember.MediaSizeName },
+                        MediaSizeSupported = new[] { new MediaSizeSupported { XDimension = new Range(210,210), YDimension = new Range(297,297) } },
+                        MediaKeySupported = new[] { (MediaKey)"key1" },
+                        MediaSourceSupported = new[] { MediaSource.Auto },
+                        MediaTypeSupported = new[] { MediaType.Stationery },
+                        MediaBackCoatingSupported = new[] { MediaCoating.None },
+                        MediaFrontCoatingSupported = new[] { MediaCoating.None },
+                        MediaColorSupported = new[] { MediaColor.White },
+                        MediaGrainSupported = new[] { MediaGrain.XDirection },
+                        MediaToothSupported = new[] { MediaTooth.Fine },
+                        MediaPrePrintedSupported = new[] { MediaPrePrinted.Blank },
+                        MediaRecycledSupported = new[] { MediaRecycled.None },
+                        MediaHoleCountSupported = new[] { new Range(0,0) },
+                        MediaOrderCountSupported = new[] { new Range(1,1) },
+                        MediaThicknessSupported = new[] { new Range(1,10) },
+                        MediaWeightMetricSupported = new[] { new Range(60,200) },
+                        MediaBottomMarginSupported = new[] { 0 },
+                        MediaLeftMarginSupported = new[] { 0 },
+                        MediaRightMarginSupported = new[] { 0 },
+                        MediaTopMarginSupported = new[] { 0 },
+                        PrintColorModeSupported = new[] { PrintColorMode.Color },
+                        JobCreationAttributesSupported = new[] { JobCreationAttribute.Copies, JobCreationAttribute.Finishings, JobCreationAttribute.Media },
+                        PrinterUUID = "uuid-1234",
+                        DocumentCreationAttributesSupported = new[] { DocumentCreationAttribute.DocumentName },
+                        JobAccountIdDefault = "account-1",
+                        JobAccountTypeDefault = JobAccountType.None,
+                        JobAccountTypeSupported = new[] { JobAccountType.None },
+                        JobAccountIdSupported = true,
+                        JobAccountingUserIdDefault = "user-1",
+                        JobAccountingUserIdSupported = true,
+                        JobPasswordEncryptionSupported = new[] { JobPasswordEncryption.None },
+                        JobAuthorizationUriSupported = true,
+                        PrinterChargeInfo = "charge-info",
+                        PrinterChargeInfoUri = new Uri("http://charge.info"),
+                        PrinterMandatoryJobAttributes = new[] { (PrinterMandatoryJobAttribute)"copies" },
+                        PrinterAlert = new[] { new PrinterAlert { Code = "alert1" } },
+                        PrinterAlertDescription = new[] { "alert-desc" },
+                        PrinterSupply = new[] { new PrinterSupply { Type = "toner", Level = 50 } },
+                        PrinterSupplyDescription = new[] { "supply-desc" },
+                        JobCancelAfterDefault = 0,
+                        JobCancelAfterSupported = new Range(0, 3600),
+                        JobSpoolingSupported = JobSpooling.Automatic,
+                        MaxPageRangesSupported = 5,
+                        PrintContentOptimizeDefault = PrintContentOptimize.Auto,
+                        PrintContentOptimizeSupported = new[] { PrintContentOptimize.Auto },
+                        OutputDeviceSupported = new[] { (OutputDevice)"device-1" },
+                        OutputDeviceUuidSupported = new[] { "http://device.uuid/1" },
+                        PrinterRequestedClientType = new[] { ClientType.OperatingSystem },
+                        PdfVersionsSupported = new[] { PdfVersion.Adobe17 },
+                        PrinterServiceType = new[] { (PrinterServiceType)"office-print" },
+                        PlatformShape = (PlatformShape?)"rectangular",
+                        RepertoireSupported = new Repertoire[] { Repertoire.UnicodeUtf8, Repertoire.IanaIso88591 },
+                        PwgRasterDocumentResolutionSupported = new[] { new Resolution(300, 300, ResolutionUnit.DotsPerInch) },
+                        PwgRasterDocumentSheetBack = PwgRasterDocumentSheetBack.Normal,
+                        PwgRasterDocumentTypeSupported = new[] { "srgb_8" },
+                        PrinterDeviceId = "1284-device-id",
+
+                        PrintBaseDefault = (PrintBase?)"raft",
+                        PrintSupportsSupported = new[] { "none", "standard" }.Select(x => (PrintSupports)x).ToArray(),
+                        PrinterVolumeSupported = new PrinterVolumeSupported
+                        {
+                            XDimension = 20000,
+                            YDimension = 20000,
+                            ZDimension = 18000
+                        },
+                        ChamberHumidityCurrent = 35,
+                        ChamberTemperatureCurrent = 26,
+                        JpegXDimensionSupported = new Range(0, 65535),
+                        JpegYDimensionSupported = new Range(1, 65535),
+                        JobPasswordSupported = 255,
+                        JobPasswordLengthSupported = new Range(4, 1020),
+                        DocumentPasswordSupported = 1023,
+                        PrinterCameraImageUri = new[] { new Uri("http://camera.example.com/image") },
+                        PrinterResourceIds = new[] { 42 },
+                        FinishingTemplateSupported = new[] { FinishingTemplate.None },
+                        FinishingsColSupported = new[] { FinishingsColMember.FinishingTemplate },
+                        FinishingsColDefault = new[] { new FinishingsCol { } },
+                        FinishingsColReady = new[] { new FinishingsCol { } },
+                        BalingTypeSupported = new[] { BalingType.Wrap },
+                        BalingWhenSupported = new[] { BalingWhen.AfterJob },
+                        BindingReferenceEdgeSupported = new[] { FinishingReferenceEdge.Left },
+                        BindingTypeSupported = new[] { BindingType.Flat },
+                        CoatingSidesSupported = new[] { CoatingSides.Both },
+                        CoatingTypeSupported = new[] { CoatingType.Matte },
+                        CoveringNameSupported = new[] { CoveringName.Plain },
+                        FinishingsColDatabase = new[] { new FinishingsCol { } },
+                        FoldingDirectionSupported = new[] { FoldingDirection.Inward },
+                        FoldingOffsetSupported = new[] { new Range(0,0) },
+                        FoldingReferenceEdgeSupported = new[] { FinishingReferenceEdge.Left },
+                        LaminatingSidesSupported = new[] { CoatingSides.Both },
+                        LaminatingTypeSupported = new[] { LaminatingType.Matte },
+                        PunchingLocationsSupported = new[] { new Range(0,0) },
+                        PunchingOffsetSupported = new[] { new Range(0,0) },
+                        PunchingReferenceEdgeSupported = new[] { FinishingReferenceEdge.Left },
+                        StitchingAngleSupported = new[] { new Range(0,0) },
+                        StitchingLocationsSupported = new[] { new Range(0,0) },
+                        StitchingMethodSupported = new[] { StitchingMethod.Auto },
+                        StitchingOffsetSupported = new[] { new Range(0,0) },
+                        StitchingReferenceEdgeSupported = new[] { FinishingReferenceEdge.Left },
+                        TrimmingOffsetSupported = new[] { new Range(0,0) },
+                        TrimmingReferenceEdgeSupported = new[] { FinishingReferenceEdge.Left },
+                        TrimmingTypeSupported = new[] { TrimmingType.Full },
+                        TrimmingWhenSupported = new[] { TrimmingWhen.AfterJob },
+                        CoverBackDefault = new Cover
+                        {
+                            CoverType = CoverType.NoCover,
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        CoverBackSupported = new[] { CoverMember.Media },
+                        CoverFrontDefault = new Cover
+                        {
+                            CoverType = CoverType.NoCover,
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        CoverFrontSupported = new[] { CoverMember.Media },
+                        CoverTypeSupported = new[] { CoverType.NoCover },
+                        ForceFrontSideSupported = new Range(0,0),
+                        ImageOrientationDefault = Orientation.Portrait,
+                        ImageOrientationSupported = new[] { Orientation.Portrait },
+                        ImpositionTemplateDefault = ImpositionTemplate.None,
+                        ImpositionTemplateSupported = new[] { ImpositionTemplate.None },
+                        InsertCountSupported = new Range(0,0),
+                        InsertSheetDefault = new[] { new InsertSheet { } },
+                        InsertSheetSupported = new[] { InsertSheetMember.InsertCount },
+                        JobAccountingOutputBinSupported = new[] { (OutputBin)"bin1" },
+                        JobAccountingSheetsDefault = new JobAccountingSheets
+                        {
+                            JobAccountingOutputBin = OutputBin.Auto,
+                            JobAccountingSheetsType = JobAccountingSheetsType.None,
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        JobAccountingSheetsSupported = new[] { JobAccountingSheetsMember.JobAccountingSheetsType },
+                        JobAccountingSheetsTypeSupported = new[] { JobAccountingSheetsType.None },
+                        JobCompleteBeforeSupported = new[] { JobCompleteBefore.None },
+                        JobCompleteBeforeTimeSupported = true,
+                        JobErrorSheetDefault = new JobErrorSheet
+                        {
+                            JobErrorSheetType = JobErrorSheetType.None,
+                            JobErrorSheetWhen = JobErrorSheetWhen.OnError,
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        JobErrorSheetSupported = new[] { JobErrorSheetMember.JobErrorSheetType },
+                        JobErrorSheetTypeSupported = new[] { JobErrorSheetType.None },
+                        JobErrorSheetWhenSupported = new[] { JobErrorSheetWhen.OnError },
+                        JobMessageToOperatorSupported = true,
+                        JobPhoneNumberDefault = "12345",
+                        JobPhoneNumberSchemeSupported = new[] { JobPhoneNumberScheme.Tel },
+                        JobPhoneNumberSupported = true,
+                        JobRecipientNameSupported = true,
+                        JobSheetMessageSupported = true,
+                        PageDeliveryDefault = PageDelivery.SameOrderFaceUp,
+                        PageDeliverySupported = new[] { PageDelivery.SameOrderFaceUp },
+                        PresentationDirectionNumberUpDefault = PresentationDirectionNumberUp.ToleftTobottom,
+                        PresentationDirectionNumberUpSupported = new[] { PresentationDirectionNumberUp.ToleftTobottom },
+                        SeparatorSheetsDefault = new SeparatorSheets
+                        {
+                            SeparatorSheetsType = [SeparatorSheetsType.None],
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        SeparatorSheetsSupported = new[] { SeparatorSheetsMember.SeparatorSheetsType },
+                        SeparatorSheetsTypeSupported = new[] { SeparatorSheetsType.None },
+                        XImagePositionDefault = XImagePosition.Left,
+                        XImagePositionSupported = new[] { XImagePosition.Left },
+                        XImageShiftDefault = 0,
+                        XImageShiftSupported = new Range(0,0),
+                        XSide1ImageShiftDefault = 0,
+                        XSide2ImageShiftDefault = 0,
+                        YImagePositionDefault = YImagePosition.Top,
+                        YImagePositionSupported = new[] { YImagePosition.Top },
+                        YImageShiftDefault = 0,
+                        YImageShiftSupported = new Range(0,0),
+                        YSide1ImageShiftDefault = 0,
+                        YSide2ImageShiftDefault = 0,
+                        AccuracyUnitsSupported = new[] { "test" }.Select(x => (AccuracyUnits)x).ToArray(),
+                        ClientInfoSupported = [(ClientInfoMember)"test"],
+                        CompressionDefault = Compression.None,
+                        CompressionSupported = [Compression.None],
+                        DocumentCharsetDefault = "en",
+                        DocumentCharsetSupported = ["en"],
+                        DocumentFormatDetailsSupported = [(DocumentFormatDetail)"test"],
+                        DocumentNaturalLanguageDefault = "en",
+                        DocumentNaturalLanguageSupported = ["en"],
+                        IppFeaturesSupported = [(IppFeature)"test"],
+                        JobIdsSupported = true,
+                        JobImpressionsSupported = new Range(0,1),
+                        JobKOctetsSupported = new Range(0,1),
+                        JobMandatoryAttributesSupported = true,
+                        JobMediaSheetsSupported = new Range(0,1),
+                        JobPagesPerSetSupported = true,
+                        PrinterFinisher = [new PrinterFinisher {
+                            Capacity = 10,
+                            Index = 0,
+                            MaxCapacity = 10,
+                            PresentOnOff = "test",
+                            Status = 0,
+                            Type = "test",
+                            Unit = "test",
+                            Extensions = new Dictionary<string, string> { { "test", "test" } }
+                        }],
+                        JobSheetsColDefault = new JobSheetsCol
+                        {
+                            JobSheets = JobSheets.Standard,
+                            Media = Media.Default,
+                            MediaCol = new MediaCol
+                            {
+                                MediaBackCoating = MediaCoating.None,
+                                MediaBottomMargin = 10,
+                                MediaLeftMargin = 10,
+                                MediaRightMargin = 10,
+                                MediaColor = MediaColor.Black,
+                                MediaFrontCoating = MediaCoating.None,
+                                MediaGrain = MediaGrain.XDirection,
+                                MediaHoleCount = 1,
+                                MediaInfo = "media-info",
+                                MediaKey = (MediaKey)"media-key"
+                            }
+                        },
+                        JobSheetsSupported = new[] { JobSheets.Standard },
+                        JobSheetsColSupported = [(JobSheetsColMember)"test"],
+                        JobSheetsDefault = JobSheets.Standard,
+                        NumberUpDefault = 1,
+                        NumberUpSupported = new[] { new Range(1, 4) },
+                        PunchingHoleDiameterConfigured = 2,
+                        PrinterFinisherDescription = new[] { "finisher-desc" },
+                        PrinterFinisherSupplies = new[] { new PrinterFinisherSupply { Type = "toner", Unit = "percent", Max = 100, Level = 80, DeviceIndex = 3 } },
+                        PrinterFinisherSuppliesDescription = new[] { "finisher-supplies-desc" },
+                        PrinterConfigChanges = 1,
+                        PrinterContactCol = [new() {
+                            ContactName = "user",
+                            ContactUri = new Uri("http://test.com"),
+                            ContactVcard = ["vcard"]
+                        }],
+                        PrinterGeoLocation = new Uri("http://test.com"),
+                        PrinterIds = [1],
+                        PrinterImpressionsCompleted = 2,
+                        PrinterImpressionsCompletedCol = 2,
+                        PrinterMediaSheetsCompleted = 3,
+                        PrinterMediaSheetsCompletedCol = 3,
+                        PrinterPagesCompleted = 4,
+                        PrinterPagesCompletedCol = 5,
+                        MaterialsColSupported = new[]
+                        {
+                            (MaterialsColMember)"materials-col-sup",
+                            MaterialsColMember.MaterialDiameter,
+                            MaterialsColMember.MaterialFillDensity,
+                            MaterialsColMember.MaterialShellThickness,
+                            MaterialsColMember.MaterialTemperature
+                        },
+                        MaxMaterialsColSupported = 10,
+                        MultipleObjectHandlingDefault = (MultipleObjectHandling?)"auto",
+                        MultipleObjectHandlingSupported = new[] { "auto" }.Select(x => (MultipleObjectHandling)x).ToArray(),
+                        PdfFeaturesSupported = new[] { (PdfFeature)"prc" },
+                        PlatformTemperatureDefault = 25,
+                        PlatformTemperatureSupported = new[] { new Range(20, 30) },
+                        PrintAccuracyDefault = new PrintAccuracy(),
+                        PrintAccuracySupported = new PrintAccuracy(),
+                        PrintBaseSupported = new[] { "raft" }.Select(x => (PrintBase)x).ToArray(),
+                        PrintObjectsSupported = new[] { (PrintObjectsMember)"all" },
+                        PrintSupportsDefault = (PrintSupports?)"standard",
+                        ConfirmationSheetPrintDefault = true,
+                        CoverSheetInfoDefault = new CoverSheetInfo(),
+                        CoverSheetInfoSupported = new[] { (CoverSheetInfoMember)"cover-sheet-info" },
+                        DestinationUriSchemesSupported = new[] { UriScheme.Ftp },
+                        DestinationUrisSupported = new[] { DestinationUrisMember.DestinationUri },
+                        FromNameSupported = 64,
+                        InputAttributesDefault = new DocumentTemplateAttributes(),
+                        InputAttributesSupported = new[] { (InputAttributesMember)"input-attributes" },
+                        InputColorModeSupported = new[] { "color" }.Select(x => (InputColorMode)x).ToArray(),
+                        InputContentTypeSupported = new[] { "application/pdf" }.Select(x => (InputContentType)x).ToArray(),
+                        InputFilmScanModeSupported = new[] { "color" }.Select(x => (InputFilmScanMode)x).ToArray(),
+                        InputOrientationRequestedSupported = new[] { Orientation.Portrait },
+                        InputQualitySupported = new[] { PrintQuality.Normal },
+                        InputResolutionSupported = new[] { new Resolution(600, 600, ResolutionUnit.DotsPerInch) },
+                        InputSidesSupported = new[] { Sides.OneSided },
+                        InputSourceSupported = new[] { "auto" }.Select(x => (InputSource)x).ToArray(),
+                        LogoUriFormatsSupported = new[] { "image/png" },
+                        LogoUriSchemesSupported = new[] { UriScheme.Http },
+                        MessageSupported = 128,
+                        MultipleDestinationUrisSupported = true,
+                        NumberOfRetriesDefault = 3,
+                        NumberOfRetriesSupported = new Range(0, 5),
+                        OrganizationNameSupported = 64,
+                        PrinterFaxLogUri = new Uri("http://test.com/faxlog"),
+                        PrinterFaxModemInfo = new[] { "modem info" },
+                        PrinterFaxModemName = new[] { "modem name" },
+                        PrinterFaxModemNumber = new[] { new Uri("tel:+123456789") },
+                        RetryIntervalDefault = 60,
+                        RetryIntervalSupported = new Range(10, 120),
+                        RetryTimeOutDefault = 300,
+                        RetryTimeOutSupported = new Range(60, 600),
+                        SubjectSupported = 128,
+                        ToNameSupported = 64,
+                        DocumentAccessSupported = [(DocumentAccessMember)"http://access.com"],
+                        FetchDocumentAttributesSupported = [(FetchDocumentAttribute)"document-name"],
+                        PrinterModeConfigured = (PrinterMode?)"standard",
+                        PrinterModeSupported = new[] { "standard" }.Select(x => (PrinterMode)x).ToArray(),
+                        PrinterStaticResourceDirectoryUri = new Uri("http://resource.com"),
+                        PrinterStaticResourceKOctetsSupported = 1024,
+                        PrinterStaticResourceKOctetsFree = 512,
+                        ChamberHumidityDefault = 40,
+                        ChamberHumiditySupported = true,
+                        ChamberTemperatureDefault = 30,
+                        ChamberTemperatureSupported = [new Range(20, 40)],
+                        MaterialAmountUnitsSupported = new[] { "mg" }.Select(x => (MaterialAmountUnits)x).ToArray(),
+                        MaterialDiameterSupported = [new Range(1, 3)],
+                        MaterialNozzleDiameterSupported = [new Range(0, 1)],
+                        MaterialPurposeSupported = new[] { "base" }.Select(x => (MaterialPurpose)x).ToArray(),
+                        MaterialRateSupported = [new Range(1, 10)],
+                        MaterialRateUnitsSupported = new[] { "mg/s" }.Select(x => (MaterialRateUnits)x).ToArray(),
+                        MaterialShellThicknessSupported = [new Range(1, 5)],
+                        MaterialTemperatureSupported = [new Range(180, 250)],
+                        MaterialTypeSupported = new[] { "pla" }.Select(x => (MaterialType)x).ToArray(),
+                        DestinationUriReady = new[]
+                        {
+                            new DestinationUriReady
+                            {
+                                DestinationInfo = "dest-info",
+                                DestinationOAuthScope = ["scope1"],
+                                DestinationOAuthToken = ["token1"],
+                                DestinationOAuthUri = new Uri("http://oauth.uri"),
+                                DestinationUri = new Uri("http://dest.uri")
+                            }
+                        },
+                        XSide1ImageOffsetSupported = new Range(1, 10),
+                        XSide2ImageOffsetSupported = new Range(1, 10),
+                        YSide1ImageOffsetSupported = new Range(2, 20),
+                        YSide2ImageOffsetSupported = new Range(2, 20),
+                        UserDefinedValuesSupported = new[] { "foo" },
+                        PdlInitFileSupported = new[] { "pdl-init-file-name" },
+                        PdlInitFileDefault = new PdlInitFile { PdlInitFileName = "init.ps", PdlInitFileLocation = new Uri("http://host/init.ps") },
+                        JobSaveDispositionSupported = new[] { "save-disposition" },
+                        JobSaveDispositionDefault = new JobSaveDisposition { SaveDisposition = SaveDisposition.SaveOnly, SaveLocation = new Uri("http://host/save") },
+                        SaveDispositionSupported = new[] { SaveDisposition.SaveOnly },
+                        SaveInfoSupported = new[] { "save-name" },
+                        SaveLocationSupported = new[] { new Uri("http://host/save") },
+                        PagesPerSubsetSupported = true
+                    },
+                    OperationAttributes = new()
+                    {
+                        StatusMessage = "successful-ok",
+                        DetailedStatusMessage = "detail1",
+                        DocumentAccessError = "none"
+                    }
+                };
+            var responseStream = new MemoryStream();
+            await server.SendResponseAsync(serverResponse, responseStream, c);
+            responseStream.Seek(0, SeekOrigin.Begin);
+            return new HttpResponseMessage { StatusCode = statusCode, Content = new StreamContent(responseStream) };
+        }
+        SharpIppClient client = new(new(GetMockOfHttpMessageHandler(func).Object));
+
+        GetPrinterAttributesResponse? clientResponse = await client.GetPrinterAttributesAsync(clientRequest);
+
+        clientRequest.Should().BeEquivalentTo(serverRequest);
+        clientResponse.Should().BeEquivalentTo(serverResponse);
+    }
+
+    [TestMethod()]
+    public async Task GetPrinterAttributesAsync_NoValueEverywhere_ServerReceivesSameRequestAndReturnsExpectedResponse()
+    {
+        SharpIppServer server = new();
+        GetPrinterAttributesRequest clientRequest = new()
+        {
+            RequestId = 123,
+            Version = new IppVersion(2, 0),
+            OperationAttributes = new()
+            {
+                PrinterUri = new Uri("http://127.0.0.1:631"),
+                AttributesCharset = Charset.Utf8,
+                AttributesNaturalLanguage = "en-us",
+                RequestingUserName = "test-user",
+                RequestedAttributes = ["printer-state", "queued-job-count"],
+                DocumentFormat = DocumentFormat.ApplicationPdf,
+            },
+        };
+
+        IIppRequestMessage? serverRawRequest = null;
+        GetPrinterAttributesResponse? serverResponse = null;
+        HttpStatusCode statusCode = HttpStatusCode.OK;
+        async Task<HttpResponseMessage> func(Stream s, CancellationToken c)
+        {
+            serverRawRequest = await server.ReceiveRawRequestAsync(s, c);
+
+            var serverRawResponse = new IppResponseMessage
+            {
+                RequestId = serverRawRequest.RequestId,
+                Version = serverRawRequest.Version,
+                StatusCode = IppStatusCode.SuccessfulOk,
+            };
+
+            serverRawResponse.OperationAttributes.Add([
+                new IppAttribute(Tag.Charset, IppAttributeNames.AttributesCharset, "utf-8"),
+                new IppAttribute(Tag.NaturalLanguage, IppAttributeNames.AttributesNaturalLanguage, "en"),
+                new IppAttribute(Tag.TextWithoutLanguage, IppAttributeNames.StatusMessage, "successful-ok"),
+                new IppAttribute(Tag.TextWithoutLanguage, IppAttributeNames.DetailedStatusMessage, "detail1"),
+                new IppAttribute(Tag.TextWithoutLanguage, IppAttributeNames.DocumentAccessError, "none")
+            ]);
+
+            serverRawResponse.PrinterAttributes.Add([
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterName, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterLocation, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterInfo, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.QueuedJobCount, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterCurrentTime, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterState, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobKOctetsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterResolutionDefault, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.MediaColDefault, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.MultipleDocumentJobsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterIsAcceptingJobs, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.ColorSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JpegXDimensionSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JpegYDimensionSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobPasswordSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobPasswordLengthSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.DocumentPasswordSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterUpTime, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.MultipleOperationTimeOut, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.MultipleOperationTimeOutAction, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JpegKOctetsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PdfKOctetsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobImpressionsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobMediaSheetsSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PagesPerMinute, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PagesPerMinuteColor, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterResolutionSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobPriorityDefault, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.JobPrioritySupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.CopiesDefault, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.CopiesSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PageRangesSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.RepertoireSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PwgRasterDocumentResolutionSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PwgRasterDocumentSheetBack, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PwgRasterDocumentTypeSupported, NoValue.Instance),
+                new IppAttribute(Tag.NoValue, IppAttributeNames.PrinterDeviceId, NoValue.Instance)
+            ]);
+
+
+            var memoryStream = new MemoryStream();
+            await server.SendRawResponseAsync(serverRawResponse, memoryStream, c);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            return new HttpResponseMessage { StatusCode = statusCode, Content = new StreamContent(memoryStream) };
+        }
+
+        SharpIppClient client = new(new(GetMockOfHttpMessageHandler(func).Object));
+        serverResponse = new GetPrinterAttributesResponse
+        {
+            RequestId = 123,
+            Version = new IppVersion(2, 0),
+            StatusCode = IppStatusCode.SuccessfulOk,
+            OperationAttributes = new()
+            {
+                AttributesCharset = (SharpIpp.Protocol.Models.Charset)"utf-8",
+                AttributesNaturalLanguage = "en",
+                StatusMessage = "successful-ok",
+                DetailedStatusMessage = "detail1",
+                DocumentAccessError = "none"
+            },
+            PrinterAttributes = new()
+            {
+                MultipleDocumentJobsSupported = NoValue.GetNoValue<bool?>(),
+                PrinterIsAcceptingJobs = NoValue.GetNoValue<bool?>(),
+                ColorSupported = NoValue.GetNoValue<bool?>(),
+                JpegXDimensionSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                JpegYDimensionSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                JobPasswordSupported = NoValue.GetNoValue<int>(),
+                JobPasswordLengthSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                DocumentPasswordSupported = NoValue.GetNoValue<int>(),
+                PrinterUpTime = NoValue.GetNoValue<int>(),
+                MultipleOperationTimeOut = NoValue.GetNoValue<int>(),
+                MultipleOperationTimeOutAction = NoValue.GetNoValue<MultipleOperationTimeOutAction>(),
+                JpegKOctetsSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                PdfKOctetsSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                JobImpressionsSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                JobMediaSheetsSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                PagesPerMinute = NoValue.GetNoValue<int>(),
+                PagesPerMinuteColor = NoValue.GetNoValue<int>(),
+                PrinterResolutionSupported = [NoValue.GetNoValue<Resolution>()],
+                JobPriorityDefault = NoValue.GetNoValue<int>(),
+                JobPrioritySupported = NoValue.GetNoValue<int>(),
+                CopiesDefault = NoValue.GetNoValue<int>(),
+                CopiesSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                PageRangesSupported = NoValue.GetNoValue<bool?>(),
+                RepertoireSupported = [NoValue.GetNoValue<Repertoire>()],
+                PwgRasterDocumentResolutionSupported = [NoValue.GetNoValue<Resolution>()],
+                PwgRasterDocumentSheetBack = NoValue.GetNoValue<PwgRasterDocumentSheetBack>(),
+                PwgRasterDocumentTypeSupported = [NoValue.GetNoValue<string>()],
+                PrinterDeviceId = NoValue.GetNoValue<string>(),
+
+                PrinterName = NoValue.GetNoValue<string>(),
+                PrinterLocation = NoValue.GetNoValue<string>(),
+                PrinterInfo = NoValue.GetNoValue<string>(),
+                QueuedJobCount = NoValue.GetNoValue<int>(),
+                PrinterCurrentTime = NoValue.GetNoValue<DateTimeOffset>(),
+                PrinterState = NoValue.GetNoValue<PrinterState>(),
+                JobKOctetsSupported = NoValue.GetNoValue<SharpIpp.Protocol.Models.Range>(),
+                PrinterResolutionDefault = NoValue.GetNoValue<Resolution>(),
+                MediaColDefault = NoValue.GetNoValue<MediaCol>()
+            }
+        };
+
+        var clientRawRequest = client.CreateRawRequest(clientRequest);
+        GetPrinterAttributesResponse? clientResponse = await client.GetPrinterAttributesAsync(clientRequest);
+
+        clientRawRequest.Should().NotBeNull().And.BeEquivalentTo(serverRawRequest, options => options.Excluding(x => x!.Document));
+        clientResponse.Should().BeEquivalentTo(serverResponse);
+        clientResponse!.PrinterAttributes!.PrinterName.Should().Be(NoValue.GetNoValue<string>());
+    }
+}

@@ -1,24 +1,50 @@
-﻿namespace SharpIpp.Protocol.Models
+namespace SharpIpp.Protocol.Models;
+
+/// <summary>
+/// This attribute determines which job start/end sheet(s), if any, MUST
+/// be printed with a job.
+/// See: RFC 2911 Section 4.2.3
+/// See: RFC 8011 Section 5.2.3
+/// </summary>
+public readonly record struct JobSheets(string Value, bool IsValue = true) : ISmartEnum 
 {
     /// <summary>
-    ///     This attribute determines which job start/end sheet(s), if any, MUST
-    ///     be printed with a job.
-    ///     https://tools.ietf.org/html/rfc2911#section-4.2.3
+    /// No job sheet is printed.
+    /// See: RFC 8011 Section 5.2.3
     /// </summary>
-    public enum JobSheets
-    {
-        Unsupported,
+    public static readonly JobSheets None = new("none");
 
-        /// <summary>
-        ///     no job sheet is printed
-        /// </summary>
-        None,
+    /// <summary>
+    /// One or more site specific standard job sheets are printed.
+    /// See: RFC 8011 Section 5.2.3
+    /// </summary>
+    public static readonly JobSheets Standard = new("standard");
 
-        /// <summary>
-        ///     one or more site specific standard job sheets are
-        ///     printed, e.g. a single start sheet or both start and end sheet is
-        ///     printed
-        /// </summary>
-        Standard,
-    }
+    /// <summary>
+    /// A Job Sheet is printed to indicate the start of the Job.
+    /// See: PWG 5100.3-2023 Section 4.1
+    /// </summary>
+    public static readonly JobSheets JobStartSheet = new("job-start-sheet");
+
+    /// <summary>
+    /// A Job Sheet is printed to indicate the end of the Job.
+    /// See: PWG 5100.3-2023 Section 4.1
+    /// </summary>
+    public static readonly JobSheets JobEndSheet = new("job-end-sheet");
+
+    /// <summary>
+    /// Job Sheets are printed to indicate the start and end of all output associated with the Job.
+    /// See: PWG 5100.3-2023 Section 4.1
+    /// </summary>
+    public static readonly JobSheets JobBothSheets = new("job-both-sheets");
+
+    /// <summary>
+    /// The first Input Page in the Document Data is printed as the Job Sheet and the Printer's standard Job Sheet is suppressed.
+    /// See: PWG 5100.3-2023 Section 4.1
+    /// </summary>
+    public static readonly JobSheets FirstPrintStreamPage = new("first-print-stream-page");
+
+    public override string ToString() => Value;
+    public static implicit operator string(JobSheets bin) => bin.Value;
+    public static implicit operator JobSheets(string value) => value is null ? throw new System.ArgumentNullException(nameof(value)) : new(value);
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.Serialization;
 
 using SharpIpp.Protocol;
@@ -9,14 +9,6 @@ namespace SharpIpp.Exceptions
     public class IppResponseException : Exception
     {
         public IppResponseException(IIppResponseMessage responseMessage)
-        {
-            ResponseMessage = responseMessage;
-        }
-
-        protected IppResponseException(
-            SerializationInfo info,
-            StreamingContext context,
-            IIppResponseMessage responseMessage) : base(info, context)
         {
             ResponseMessage = responseMessage;
         }

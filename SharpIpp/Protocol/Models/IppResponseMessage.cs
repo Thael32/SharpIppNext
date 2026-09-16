@@ -1,21 +1,26 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Generic;
+using SharpIpp.Models.Responses;
 
 namespace SharpIpp.Protocol.Models
 {
-    public class IppResponseMessage : IIppResponseMessage
+    public class IppResponseMessage : IppResponse<OperationAttributes>, IIppResponseMessage
     {
-        public IppVersion Version { get; set; } = IppVersion.V1_1;
+        public new List<List<IppAttribute>> OperationAttributes { get; } = [];
 
-        public IppStatusCode StatusCode { get; set; }
+        public List<List<IppAttribute>> JobAttributes { get; } = [];
 
-        public int RequestId { get; set; } = 1;
+        public List<List<IppAttribute>> PrinterAttributes { get; } = [];
 
-        public List<IppSection> Sections { get; } = new List<IppSection>();
+        public List<List<IppAttribute>> UnsupportedAttributes { get; } = [];
 
-        public override string ToString()
-        {
-            return $"{nameof(Version)}: {Version}\n{nameof(StatusCode)}: {StatusCode}\n{nameof(RequestId)}: {RequestId}\nSections:\n{string.Join("\n", Sections.Select(s => s.ToString()))}";
-        }
+        public List<List<IppAttribute>> SubscriptionAttributes { get; } = [];
+
+        public List<List<IppAttribute>> EventNotificationAttributes { get; } = [];
+
+        public List<List<IppAttribute>> ResourceAttributes { get; } = [];
+
+        public List<List<IppAttribute>> DocumentAttributes { get; } = [];
+
+        public List<List<IppAttribute>> SystemAttributes { get; } = [];
     }
 }

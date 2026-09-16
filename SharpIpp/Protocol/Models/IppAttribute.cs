@@ -1,122 +1,121 @@
-﻿using System;
+using System;
+using System.Numerics;
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
-namespace SharpIpp.Protocol.Models
+namespace SharpIpp.Protocol.Models;
+
+public readonly struct IppAttribute : IEquatable<IppAttribute>
 {
-    public class IppAttribute : IEquatable<IppAttribute>
+    public IppAttribute()
     {
-        internal IppAttribute(Tag tag, string name, object value)
+        Tag = Tag.NoValue;
+        Name = string.Empty;
+        Value = NoValue.Instance;
+    }
+
+    internal IppAttribute(Tag tag, string name, object value)
+    {
+        if (name is null)
+            throw new ArgumentNullException(nameof(name));
+        if (value is null)
+            throw new ArgumentNullException(nameof(value));
+
+        if (tag != Tag.BegCollection && tag != Tag.EndCollection && NoValue.IsNoValue(value, tag))
         {
-            Tag = tag;
-            Name = name;
-            Value = value;
+            tag = Tag.NoValue;
+            value = NoValue.Instance;
+        }
+        Tag = tag;
+        Name = name;
+        Value = value;
+    }
+
+    public IppAttribute(Tag tag, string name, int value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, bool value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, string value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, DateTimeOffset value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, NoValue value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, Range value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, Resolution value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, StringWithLanguage value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, OctetString value) : this(tag, name, value as object)
+    {
+    }
+
+    public IppAttribute(Tag tag, string name, byte[] value) : this(tag, name, value as object)
+    {
+    }
+
+    public Tag Tag { get; }
+
+    public string Name { get; }
+
+    /// <summary>
+    /// Possible values:
+    /// <see cref="int"/>
+    /// <see cref="bool"/>
+    /// <see cref="string" />
+    /// <see cref="DateTimeOffset" />
+    /// <see cref="NoValue" />
+    /// <see cref="Range" />
+    /// <see cref="Resolution" />
+    /// <see cref="StringWithLanguage" />
+    /// </summary>
+    public object Value { get; }
+
+    public bool Equals(IppAttribute other)
+    {
+        return Tag == other.Tag && Name == other.Name && Equals(Value, other.Value);
+    }
+
+    public override string ToString()
+    {
+        return $"({Tag}) {Name}: {Value}";
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is not IppAttribute other)
+        {
+            return false;
         }
 
-        public IppAttribute()
+        return Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
         {
-            Name = null!;
-            Value = null!;
-        }
-
-        public IppAttribute(Tag tag, string name, int value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, bool value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, string value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, DateTimeOffset value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, NoValue value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, Range value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, Resolution value) : this(tag, name, (object)value)
-        {
-        }
-
-        public IppAttribute(Tag tag, string name, StringWithLanguage value) : this(tag, name, (object)value)
-        {
-        }
-
-        public Tag Tag { get; }
-
-        public string Name { get; }
-
-        /// <summary>
-        ///     Possible values:
-        ///     <see cref="int"/>
-        ///     <see cref="bool"/>
-        ///     <see cref="string" />
-        ///     <see cref="DateTimeOffset" />
-        ///     <see cref="NoValue" />
-        ///     <see cref="Range" />
-        ///     <see cref="Resolution" />
-        ///     <see cref="StringWithLanguage" />
-        /// </summary>
-        public object Value { get; }
-
-        public bool Equals(IppAttribute other)
-        {
-            if (null == other)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return Tag == other.Tag && Name == other.Name && Equals(Value, other.Value);
-        }
-
-        public override string ToString()
-        {
-            return $"({Tag}) {Name}: {Value}";
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (null == obj)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            return Equals((IppAttribute)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = (int)Tag;
-                hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Value != null ? Value.GetHashCode() : 0);
-                return hashCode;
-            }
+            var hashCode = (int)Tag;
+            hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (Value != null ? Value.GetHashCode() : 0);
+            return hashCode;
         }
     }
 }

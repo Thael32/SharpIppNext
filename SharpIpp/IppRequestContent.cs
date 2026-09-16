@@ -1,0 +1,138 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
+using SharpIpp.Protocol;
+using SharpIpp.Protocol.Models;
+
+namespace SharpIpp;
+
+/// <summary>
+/// Represents the HTTP content for an IPP request, encapsulating the serialization
+/// of an <see cref="IIppRequestMessage"/> to a stream using an <see cref="IIppProtocol"/> instance.
+/// </summary>
+internal class IppRequestContent : HttpContent
+{
+    private readonly IIppRequestMessage _request;
+    private readonly IIppProtocol _protocol;
+    private readonly CancellationToken _cancellationToken;
+    private readonly long _originalDocumentPosition;
+    private long? _length;
+
+    public IppRequestContent(IIppRequestMessage request, IIppProtocol protocol, CancellationToken cancellationToken)
+    {
+        _request = request;
+        _protocol = protocol;
+        _cancellationToken = cancellationToken;
+        Headers.ContentType = new MediaTypeHeaderValue("application/ipp");
+        if (_request.Document != null && _request.Document.CanSeek)
+        {
+            try
+            {
+                _originalDocumentPosition = _request.Document.Position;
+            }
+            catch
+            {
+                _originalDocumentPosition = 0;
+            }
+        }
+    }
+
+    protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+    {
+        if (_request.Document != null && _request.Document.CanSeek)
+        {
+            try
+            {
+                _request.Document.Position = _originalDocumentPosition;
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+        return _protocol.WriteIppRequestAsync(_request, stream, _cancellationToken);
+    }
+
+    protected override async Task<Stream> CreateContentReadStreamAsync()
+    {
+        // Serialize only the IPP header/attributes (without the document) into a MemoryStream.
+        var headerStream = new MemoryStream();
+        var wrappedRequest = new IppRequestMessageFilter(_request);
+        wrappedRequest.ClearProperty(x => x.Document);
+        await _protocol.WriteIppRequestAsync(wrappedRequest, headerStream, _cancellationToken).ConfigureAwait(false);
+        headerStream.Position = 0;
+
+        if (_request.Document == null)
+        {
+            return headerStream;
+        }
+
+        if (_request.Document.CanSeek)
+        {
+            try
+            {
+                _request.Document.Position = _originalDocumentPosition;
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        // Return a composite stream that reads the header first, then the document.
+        // Dispose headerStream when done (leaveOpen: false), but leave _request.Document open (leaveOpen: true).
+        return new ConcatenatedReadStream((headerStream, false), (_request.Document, true));
+    }
+
+    protected override bool TryComputeLength(out long length)
+    {
+        if (_length.HasValue)
+        {
+            length = _length.Value;
+            return true;
+        }
+
+        long documentLength = 0;
+        var originalDocument = _request.Document;
+        if (originalDocument != null)
+        {
+            if (!originalDocument.CanSeek)
+            {
+                length = -1;
+                return false;
+            }
+
+            try
+            {
+                documentLength = System.Math.Max(0L, originalDocument.Length - _originalDocumentPosition);
+            }
+            catch
+            {
+                length = -1;
+                return false;
+            }
+        }
+
+        try
+        {
+            using var ms = new MemoryStream();
+            var wrappedRequest = new IppRequestMessageFilter(_request);
+            wrappedRequest.ClearProperty(x => x.Document);
+            _protocol.WriteIppRequestAsync(wrappedRequest, ms, CancellationToken.None).GetAwaiter().GetResult();
+            _length = ms.Length + documentLength;
+        }
+        catch
+        {
+            length = -1;
+            return false;
+        }
+
+        length = _length.Value;
+        return true;
+    }
+
+}

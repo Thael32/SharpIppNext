@@ -1,107 +1,375 @@
-﻿#nullable disable
-
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using SharpIpp.Protocol.Models;
 
-namespace SharpIpp.Mapping
+namespace SharpIpp.Mapping;
+
+public class SimpleMapper : IMapper
 {
-    public class SimpleMapper : IMapper
+    private readonly ConcurrentDictionary<(Type src, Type dst), Func<object, object?, SimpleMapper, object?>> _dictionary = new();
+
+    private readonly ConcurrentDictionary<(Type src, Type dst), List<((Type src, Type dst) map, MapType type)>> _pairsCache = new();
+
+    public void CreateMap<TSource, TDest>(Func<TSource, IMapperApplier, TDest?> mapFunc)
     {
-        private readonly Dictionary<(Type src, Type dst), Func<object, object, SimpleMapper, object>> _dictionary =
-            new Dictionary<(Type src, Type dst), Func<object, object, SimpleMapper, object>>();
+        CreateMap(typeof(TSource), typeof(TDest), (src, mapper) => mapFunc((TSource)src, mapper));
+    }
 
-        public void CreateMap<TSource, TDest>(Func<TSource, IMapperApplier, TDest> mapFunc)
+    public void CreateMap<TSource, TDest>(Func<TSource, TDest?, IMapperApplier, TDest?> mapFunc)
+    {
+        CreateMap(typeof(TSource),
+            typeof(TDest),
+            (src, dst, mapper) => mapFunc((TSource)src, (TDest?)dst, mapper));
+    }
+
+    public void CreateMap(Type sourceType, Type destType, Func<object, IMapperApplier, object?> mapFunc)
+    {
+        CreateMap(sourceType, destType, (src, dst, mapper) => mapFunc(src, mapper));
+    }
+
+    public void CreateMap(Type sourceType, Type destType, Func<object, object?, IMapperApplier, object?> mapFunc)
+    {
+        var key = (sourceType, destType);
+        _dictionary[key] = (src, dst, mapper) => mapFunc(src, dst, mapper);
+    }
+
+    public TDest Map<TDest>(object? source)
+    {
+        var res = MapNullable<TDest>(source) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+        return res;
+    }
+
+    public TDest Map<TDest>(object? source, TDest? dest)
+    {
+        var res = MapNullable(source, dest) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+        return res;
+    }
+
+    public TDest Map<TSource, TDest>(TSource? source)
+    {
+        var res = MapNullable<TSource, TDest>(source) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+        return res;
+    }
+
+    public TDest Map<TSource, TDest>(TSource? source, TDest? dest)
+    {
+        var res = MapNullable(source, dest) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+        return res;
+    }
+
+    public TDest? MapNullable<TDest>(object? source)
+    {
+        return MapNullable<TDest>(source, default);
+    }
+
+    public TDest? MapNullable<TDest>(object? source, TDest? dest)
+    {
+        if (source == null)
         {
-            CreateMap(typeof(TSource), typeof(TDest), (src, mapper) => mapFunc((TSource)src, mapper));
+            return dest;
         }
 
-        public void CreateMap<TSource, TDest>(Func<TSource, TDest, IMapperApplier, TDest> mapFunc)
+        return MapNullable(source, source.GetType(), dest);
+    }
+
+    public TDest? MapNullable<TSource, TDest>(TSource? source)
+    {
+        return MapNullable<TSource, TDest>(source, default);
+    }
+
+    public TDest? MapNullable<TSource, TDest>(TSource? source, TDest? dest)
+    {
+        if (source == null)
         {
-            CreateMap(typeof(TSource),
-                typeof(TDest),
-                (src, dst, mapper) => mapFunc((TSource)src, (TDest)dst, mapper));
+            return dest;
         }
 
-        public void CreateMap(Type sourceType, Type destType, Func<object, IMapperApplier, object> mapFunc)
+        return MapNullable(source, typeof(TSource), dest);
+    }
+
+    public TDest? MapNullable<TDest>(object? source, Type sourceType, TDest? dest)
+    {
+        return (TDest?)MapNullable(source, sourceType, typeof(TDest), dest);
+    }
+
+    public object Map(object? source, Type destType)
+    {
+        return MapNullable(source, destType) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+    }
+
+    public object Map(object? source, Type sourceType, Type destType)
+    {
+        return Map(source, sourceType, destType, null);
+    }
+
+    public object Map(object? source, Type sourceType, Type destType, object? dest)
+    {
+        return MapNullable(source, sourceType, destType, dest) ?? throw new ArgumentException("Cannot map null source to non-nullable destination without a default destination.");
+    }
+
+    public object? MapNullable(object? source, Type destType)
+    {
+        if (source == null)
         {
-            CreateMap(sourceType, destType, (src, dst, mapper) => mapFunc(src, mapper));
+            return null;
         }
 
-        public void CreateMap(Type sourceType, Type destType, Func<object, object, IMapperApplier, object> mapFunc)
+        return MapNullable(source, source.GetType(), destType, null);
+    }
+
+    public object? MapNullable(object? source, Type sourceType, Type destType)
+    {
+        return MapNullable(source, sourceType, destType, null);
+    }
+
+    public object? MapNullable(object? source, Type sourceType, Type destType, object? dest)
+    {
+        if (source == null)
         {
-            var key = (sourceType, destType);
-            var value = mapFunc;
-            _dictionary[key] = value;
+            return dest;
         }
 
-        public TDest Map<TDest>(object source)
+        if (sourceType == destType)
         {
-            return Map<TDest>(source, default);
+            return source;
         }
 
-        public TDest Map<TDest>(object source, TDest dest)
-        {
-            return Map(source, source.GetType(), dest);
-        }
+        var pairs = _pairsCache.GetOrAdd((sourceType, destType), key => PossiblePairs(key.src, key.dst).ToList());
 
-        public TDest Map<TSource, TDest>(TSource source)
+        foreach (var (map, type) in pairs)
         {
-            return Map<TSource, TDest>(source, default);
-        }
-
-        public TDest Map<TSource, TDest>(TSource source, TDest dest)
-        {
-            return Map(source, typeof(TSource), dest);
-        }
-
-        private TDest Map<TDest>(object source, Type sourceType, TDest dest)
-        {
-            var destType = typeof(TDest);
-
-            if (sourceType == destType)
+            switch (type)
             {
-                return (TDest)source;
+                case MapType.Cast: return source;
+                case MapType.Simple:
+                    if (_dictionary.TryGetValue(map, out var mapFunc))
+                    {
+                        var result = mapFunc(source, dest, this);
+
+                        return result;
+                    }
+                    break;
             }
-            
-            foreach (var (map, type) in PossiblePairs(sourceType, destType))
-            {
-                switch (type)
-                {
-                    case MapType.Cast: return (TDest)source;
-                    case MapType.Simple:
-                        if (!_dictionary.TryGetValue(map, out var mapFunc))
-                        {
-                            continue;
-                        }
+        }
 
-                        return (TDest)mapFunc(source, dest, this);
+        if (TryMapEnumerableToCollection(source, destType, out var collectionResult))
+        {
+            return collectionResult;
+        }
+
+        throw new ArgumentException($"No mapping found for types {sourceType.FullName} -> {destType.FullName}. Source: {source}");
+    }
+
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2067:UnsatisfiedPublicParameterlessConstructor", Justification = "Mapping types are statically referenced, and lists/arrays are preserved.")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2070:UnsatisfiedPublicConstructor", Justification = "Mapping types are statically referenced, and lists/arrays are preserved.")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode", Justification = "Mapping types are statically referenced, and generic list/array code is generated by static registrations.")]
+    private bool TryMapEnumerableToCollection(object source, Type destType, out object? result)
+    {
+        result = null;
+
+        if (source is string || source is not IEnumerable sourceEnumerable)
+        {
+            return false;
+        }
+
+        if (!TryGetCollectionElementType(destType, out var destElementType, out var isArray))
+        {
+            return false;
+        }
+
+        var mappedItems = new List<object?>();
+        foreach (var item in sourceEnumerable)
+        {
+            var sourceItemType = item?.GetType() ?? destElementType;
+            mappedItems.Add(MapNullable(item, sourceItemType, destElementType, null));
+        }
+
+        if (isArray)
+        {
+            var array = Array.CreateInstance(destElementType, mappedItems.Count);
+            for (var i = 0; i < mappedItems.Count; i++)
+            {
+                var value = mappedItems[i];
+                if (value == null && destElementType.IsValueType)
+                {
+                    value = Activator.CreateInstance(destElementType);
+                }
+
+                array.SetValue(value, i);
+            }
+
+            result = array;
+            return true;
+        }
+
+        var listType = typeof(List<>).MakeGenericType(destElementType);
+        var list = (IList)Activator.CreateInstance(listType)!;
+        foreach (var item in mappedItems)
+        {
+            if (item == null && destElementType.IsValueType)
+            {
+                list.Add(Activator.CreateInstance(destElementType));
+            }
+            else
+            {
+                list.Add(item);
+            }
+        }
+
+        if (destType.IsAssignableFrom(listType))
+        {
+            result = list;
+            return true;
+        }
+
+        if (!destType.IsInterface && !destType.IsAbstract)
+        {
+            var enumerableType = typeof(IEnumerable<>).MakeGenericType(destElementType);
+            var enumerableCtor = destType.GetConstructor(new[] { enumerableType });
+            if (enumerableCtor != null)
+            {
+                result = enumerableCtor.Invoke(new object[] { list });
+                return true;
+            }
+
+            if (typeof(IList).IsAssignableFrom(destType) && destType.GetConstructor(Type.EmptyTypes) != null)
+            {
+                var destinationList = (IList)Activator.CreateInstance(destType)!;
+                foreach (var item in list)
+                {
+                    destinationList.Add(item);
+                }
+
+                result = destinationList;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2070:UnsatisfiedInterfaces", Justification = "Collection type interfaces are preserved.")]
+    private static bool TryGetCollectionElementType(Type type, out Type elementType, out bool isArray)
+    {
+        isArray = false;
+
+        if (type.IsArray)
+        {
+            elementType = type.GetElementType()!;
+            isArray = true;
+            return true;
+        }
+
+        if (TryGetCollectionElementTypeFromGenericType(type, out elementType))
+        {
+            return true;
+        }
+
+        foreach (var interfaceType in type.GetInterfaces())
+        {
+            if (TryGetCollectionElementTypeFromGenericType(interfaceType, out elementType))
+            {
+                return true;
+            }
+        }
+
+        elementType = typeof(object);
+        return false;
+    }
+
+    private static bool TryGetCollectionElementTypeFromGenericType(Type type, out Type elementType)
+    {
+        if (!type.IsGenericType)
+        {
+            elementType = typeof(object);
+            return false;
+        }
+
+        var genericDefinition = type.GetGenericTypeDefinition();
+        if (genericDefinition != typeof(List<>)
+            && genericDefinition != typeof(IEnumerable<>)
+            && genericDefinition != typeof(ICollection<>)
+            && genericDefinition != typeof(IList<>)
+            && genericDefinition != typeof(IReadOnlyCollection<>)
+            && genericDefinition != typeof(IReadOnlyList<>)
+            && genericDefinition != typeof(ISet<>))
+        {
+            elementType = typeof(object);
+            return false;
+        }
+
+        elementType = type.GetGenericArguments()[0];
+        return true;
+    }
+
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2070:UnsatisfiedInterfaces", Justification = "Interfaces of mapped models are preserved.")]
+    private static IEnumerable<((Type src, Type dst) map, MapType type)> PossiblePairs(Type sourceType, Type destType)
+    {
+        var visited = new HashSet<(Type src, Type dst)>();
+
+        static IEnumerable<Type> SourceCandidates(Type src)
+        {
+            yield return src;
+            foreach (var ifc in src.GetInterfaces())
+            {
+                yield return ifc;
+            }
+        }
+
+        static IEnumerable<Type> DestinationCandidates(Type dst)
+        {
+            yield return dst;
+
+            var underlying = Nullable.GetUnderlyingType(dst);
+            if (underlying != null)
+            {
+                yield return underlying;
+            }
+
+            if (!dst.IsValueType)
+            {
+                for (var baseType = dst.BaseType; baseType != null; baseType = baseType.BaseType)
+                {
+                    yield return baseType;
+                }
+
+                foreach (var ifc in dst.GetInterfaces())
+                {
+                    yield return ifc;
                 }
             }
-
-            throw new ArgumentException($"No mapping found for types {sourceType} -> {destType}. Source: {source}");
         }
 
-        private IEnumerable<((Type src, Type dst) map, MapType type)> PossiblePairs(Type sourceType, Type destType)
+        static bool TryAdd(HashSet<(Type src, Type dst)> set, Type src, Type dst)
         {
-            var underlying = Nullable.GetUnderlyingType(destType);
-
-            if (underlying != null && underlying == sourceType)
-            {
-                yield return ((sourceType, destType), MapType.Cast);
-            }
-
-            yield return ((sourceType, destType), MapType.Simple);
-
-            foreach (var ifc in sourceType.GetInterfaces())
-            {
-                yield return ((ifc, destType), MapType.Simple);
-            }
+            return set.Add((src, dst));
         }
 
-        private enum MapType
+        var underlying = Nullable.GetUnderlyingType(destType);
+
+        if (underlying != null && underlying == sourceType)
         {
-            Simple,
-            Cast,
+            yield return ((sourceType, destType), MapType.Cast);
         }
+
+        foreach (var src in SourceCandidates(sourceType))
+        {
+            foreach (var dst in DestinationCandidates(destType))
+            {
+                if (TryAdd(visited, src, dst))
+                {
+                    yield return ((src, dst), MapType.Simple);
+                }
+            }
+        }
+    }
+
+    private enum MapType
+    {
+        Simple,
+        Cast,
     }
 }

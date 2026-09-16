@@ -1,41 +1,46 @@
-﻿using System;
+using System;
 
-namespace SharpIpp.Protocol.Models
+namespace SharpIpp.Protocol.Models;
+
+public readonly struct StringWithLanguage(string language, string value, bool isValue = true) : IEquatable<StringWithLanguage>, INoValue
 {
-    public struct StringWithLanguage : IEquatable<StringWithLanguage>
+    public string Language { get; } = language;
+
+    public string Value { get; } = value;
+
+    public bool IsValue { get; } = isValue;
+
+    public override string ToString()
     {
-        public string Language { get; set; }
+        return $"{Value} ({Language})";
+    }
 
-        public string Value { get; set; }
+    public bool Equals(StringWithLanguage other)
+    {
+        return Language == other.Language && Value == other.Value;
+    }
 
-        public StringWithLanguage(string language, string value)
+    public override bool Equals(object? obj)
+    {
+        return obj is StringWithLanguage other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
         {
-            Language = language;
-            Value = value;
+            return ((Language != null ? Language.GetHashCode() : 0) * 397) ^
+                   (Value != null ? Value.GetHashCode() : 0);
         }
+    }
 
-        public override string ToString()
-        {
-            return $"{Value} ({Language})";
-        }
+    public static bool operator ==(StringWithLanguage left, StringWithLanguage right)
+    {
+        return left.Equals(right);
+    }
 
-        public bool Equals(StringWithLanguage other)
-        {
-            return Language == other.Language && Value == other.Value;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is StringWithLanguage other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return ((Language != null ? Language.GetHashCode() : 0) * 397) ^
-                       (Value != null ? Value.GetHashCode() : 0);
-            }
-        }
+    public static bool operator !=(StringWithLanguage left, StringWithLanguage right)
+    {
+        return !left.Equals(right);
     }
 }

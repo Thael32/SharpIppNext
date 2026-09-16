@@ -1,0 +1,836 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using SharpIpp.Models.Requests;
+using SharpIpp.Models.Responses;
+using SharpIpp.Protocol;
+using SharpIpp.Validation;
+
+namespace SharpIpp;
+
+public interface ISharpIppClient : IDisposable
+{
+    /// <summary>
+    /// Gets or sets the validator used to validate raw IPP request messages.
+    /// </summary>
+    IIppRequestMessageValidator? RequestMessageValidator { get; set; }
+
+    /// <summary>
+    /// Gets or sets the validator used to validate typed IPP request objects.
+    /// </summary>
+    IIppRequestValidator? RequestValidator { get; set; }
+
+    /// <summary>
+    /// Gets or sets the validator used to validate raw IPP response messages.
+    /// </summary>
+    IIppResponseMessageValidator? ResponseMessageValidator { get; set; }
+
+    /// <summary>
+    /// Gets or sets the validator used to validate typed IPP response objects.
+    /// </summary>
+    IIppResponseValidator? ResponseValidator { get; set; }
+
+    /// <summary>
+    /// Sends a raw IPP request message to the target printer.
+    /// This method can be used to send custom operations
+    /// </summary>
+    /// <param name="printerUri">The target printer URI.</param>
+    /// <param name="request">The raw IPP request message to send.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation, containing the raw IPP response message.</returns>
+    Task<IIppResponseMessage> SendAsync(Uri printerUri, IIppRequestMessage request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a raw IPP request message from a typed IPP request model.
+    /// </summary>
+    /// <typeparam name="T">The type of the IPP request.</typeparam>
+    /// <param name="ippRequestMessage">The typed IPP request model.</param>
+    /// <returns>The raw IPP request message.</returns>
+    IIppRequestMessage CreateRawRequest<T>(T ippRequestMessage) where T : IIppRequest;
+
+    /// <summary>
+    /// Maps a raw IPP response message to a typed IPP response model.
+    /// </summary>
+    /// <typeparam name="T">The type of the IPP response.</typeparam>
+    /// <param name="ippResponse">The raw IPP response message.</param>
+    /// <returns>The mapped typed IPP response model.</returns>
+    T CreateResponse<T>(IIppResponseMessage ippResponse) where T : IIppResponse;
+
+
+    /// <summary>
+    /// Cancel-Job Operation
+    /// This REQUIRED operation allows a client to cancel a Print Job from
+    /// the time the job is created up to the time it is completed, canceled,
+    /// or aborted.  Since a Job might already be printing by the time a
+    /// Cancel-Job is received, some media sheet pages might be printed
+    /// before the job is actually terminated.
+    /// See: RFC 2911 Section 3.3.3
+    /// </summary>
+    Task<CancelJobResponse> CancelJobAsync(CancelJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Job Operation
+    /// This OPTIONAL operation is similar to the Print-Job operation
+    /// except that in the Create-Job request, a client does
+    /// not supply document data or any reference to document data.  Also,
+    /// the client does not supply any of the "document-name", "document-
+    /// format", "compression", or "document-natural-language" operation
+    /// attributes.  This operation is followed by one or more Send-Document
+    /// or Send-URI operations.  In each of those operation requests, the
+    /// client OPTIONALLY supplies the "document-name", "document-format",
+    /// and "document-natural-language" attributes for each document in the
+    /// multi-document Job object.
+    /// See: RFC 2911 Section 3.2.4
+    /// </summary>
+    Task<CreateJobResponse> CreateJobAsync(CreateJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Job-Attributes Operation
+    /// This REQUIRED operation allows a client to request the values of
+    /// attributes of a Job object and it is almost identical to the Get-
+    /// Printer-Attributes operation.  The only
+    /// differences are that the operation is directed at a Job object rather
+    /// than a Printer object, there is no "document-format" operation
+    /// attribute used when querying a Job object, and the returned attribute
+    /// group is a set of Job object attributes rather than a set of Printer
+    /// object attributes.
+    /// See: RFC 2911 Section 3.3.4
+    /// </summary>
+    Task<GetJobAttributesResponse> GetJobAttributesAsync(GetJobAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Jobs Operation
+    /// This REQUIRED operation allows a client to retrieve the list of Job
+    /// objects belonging to the target Printer object.  The client may also
+    /// supply a list of Job attribute names and/or attribute group names.  A
+    /// group of Job object attributes will be returned for each Job object
+    /// that is returned.
+    /// This operation is similar to the Get-Job-Attributes operation, except
+    /// that this Get-Jobs operation returns attributes from possibly more
+    /// than one object.
+    /// See: RFC 2911 Section 3.2.6
+    /// </summary>
+    Task<GetJobsResponse> GetJobsAsync(GetJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Printer-Attributes Operation
+    /// This REQUIRED operation allows a client to request the values of
+    /// attributes of a Printer object.
+    /// See: RFC 2911 Section 3.2.5
+    /// </summary>
+    Task<GetPrinterAttributesResponse> GetPrinterAttributesAsync(GetPrinterAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hold-Job Operation
+    /// This OPTIONAL operation allows a client to hold a pending job in the
+    /// queue so that it is not eligible for scheduling.  If the Hold-Job
+    /// operation is supported, then the Release-Job operation MUST be
+    /// supported, and vice-versa.  The OPTIONAL "job-hold-until" operation
+    /// attribute allows a client to specify whether to hold the job
+    /// indefinitely or until a specified time period, if supported.
+    /// See: RFC 2911 Section 3.3.5
+    /// </summary>
+    Task<HoldJobResponse> HoldJobAsync(HoldJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pause-Printer Operation
+    /// This OPTIONAL operation allows a client to stop the Printer object
+    /// from scheduling jobs on all its devices.  Depending on
+    /// implementation, the Pause-Printer operation MAY also stop the Printer
+    /// from processing the current job or jobs.  Any job that is currently
+    /// being printed is either stopped as soon as the implementation permits
+    /// or is completed, depending on implementation.  The Printer object
+    /// MUST still accept create operations to create new jobs, but MUST
+    /// prevent any jobs from entering the 'processing' state.
+    /// See: RFC 2911 Section 3.2.7
+    /// </summary>
+    Task<PausePrinterResponse> PausePrinterAsync(PausePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Identify-Printer Operation.
+    /// This operation allows a client to request physical identification actions on a Printer.
+    /// See: PWG 5100.13-2023 Section 6.8.4
+    /// </summary>
+    Task<IdentifyPrinterResponse> IdentifyPrinterAsync(IdentifyPrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Print-Job Operation
+    /// This REQUIRED operation allows a client to submit a print job with
+    /// only one document and supply the document data (rather than just a
+    /// reference to the data).
+    /// See: RFC 2911 Section 3.2.1
+    /// </summary>
+    Task<PrintJobResponse> PrintJobAsync(PrintJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Print-URI Operation
+    /// DEPRECATED.
+    /// This OPTIONAL operation is identical to the Print-Job operation
+    /// except that a client supplies a URI reference to the
+    /// document data using the "document-uri" (uri) operation attribute (in
+    /// Group 1) rather than including the document data itself.  Before
+    /// returning the response, the Printer MUST validate that the Printer
+    /// supports the retrieval method (e.g., http, ftp, etc.) implied by the
+    /// URI, and MUST check for valid URI syntax.  If the client-supplied URI
+    /// scheme is not supported, i.e. the value is not in the Printer
+    /// object's "referenced-uri-scheme-supported" attribute, the Printer
+    /// object MUST reject the request and return the 'client-error-uri-
+    /// scheme-not-supported' status code.
+    /// See: RFC 2911 Section 3.2.2
+    /// </summary>
+    [Obsolete("The 'Print-URI' operation is deprecated.")]
+    Task<PrintUriResponse> PrintUriAsync(PrintUriRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Purge-Jobs Operation
+    /// This OPTIONAL operation allows a client to remove all jobs from an
+    /// IPP Printer object, regardless of their job states, including jobs in
+    /// the Printer object's Job History.  After a
+    /// Purge-Jobs operation has been performed, a Printer object MUST return
+    /// no jobs in subsequent Get-Job-Attributes and Get-Jobs responses
+    /// (until new jobs are submitted).
+    /// Whether the Purge-Jobs (and Get-Jobs) operation affects jobs that
+    /// were submitted to the device from other sources than the IPP Printer
+    /// object in the same way that the Purge-Jobs operation affects jobs
+    /// that were submitted to the IPP Printer object using IPP, depends on
+    /// implementation, i.e., on whether the IPP protocol is being used as a
+    /// universal management protocol or just to manage IPP jobs,
+    /// respectively.
+    /// <br/>
+    /// Deprecated/Obsolete Support: The library intentionally implements operations and attributes that the latest standards have deprecated or obsoleted for the sake of backward compatibility, such as the Purge-Jobs operation (Deprecated in RFC 8011).
+    /// See: RFC 2911 Section 3.2.9
+    /// </summary>
+    [Obsolete("The 'Purge-Jobs' operation is deprecated. See RFC 8011 Section 4.2.9.")]
+    Task<PurgeJobsResponse> PurgeJobsAsync(PurgeJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Release-Job Operation
+    /// This OPTIONAL operation allows a client to release a previously held
+    /// job so that it is again eligible for scheduling.  If the Hold-Job
+    /// operation is supported, then the Release-Job operation MUST be
+    /// supported, and vice-versa.
+    /// This operation removes the "job-hold-until" job attribute, if
+    /// present, from the job object that had been supplied in the create or
+    /// most recent Hold-Job or Restart-Job operation and removes its effect
+    /// on the job.  The IPP object MUST remove the 'job-hold-until-
+    /// specified' value from the job's "job-state-reasons" attribute, if
+    /// present.
+    /// See: RFC 2911 Section 3.3.6
+    /// </summary>
+    Task<ReleaseJobResponse> ReleaseJobAsync(ReleaseJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restart-Job Operation
+    /// This OPTIONAL operation allows a client to restart a job that is
+    /// retained in the queue after processing has completed.
+    /// The job is moved to the 'pending' or 'pending-held' job state and
+    /// restarts at the beginning on the same IPP Printer object with the
+    /// same attribute values.  If any of the documents in the job were
+    /// passed by reference (Print-URI or Send-URI), the Printer MUST re-
+    /// fetch the data, since the semantics of Restart-Job are to repeat all
+    /// Job processing.  The Job Description attributes that accumulate job
+    /// progress, such as "job-impressions-completed", "job-media-sheets-
+    /// completed", and "job-k-octets-processed", MUST be reset to 0 so that
+    /// they give an accurate record of the job from its restart point.  The
+    /// job object MUST continue to use the same "job-uri" and "job-id"
+    /// attribute values.
+    /// <br/>
+    /// Deprecated/Obsolete Support: The library intentionally implements operations and attributes that the latest standards have deprecated or obsoleted for the sake of backward compatibility, such as the Restart-Job operation (Deprecated in RFC 8011).
+    /// See: RFC 2911 Section 3.3.7
+    /// </summary>
+    [Obsolete("The 'Restart-Job' operation is deprecated. See RFC 8011 Section 4.3.7.")]
+    Task<RestartJobResponse> RestartJobAsync(RestartJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set-Job-Attributes Operation
+    /// This operation allows a client to update settable Job attributes.
+    /// </summary>
+    Task<SetJobAttributesResponse> SetJobAttributesAsync(SetJobAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set-Printer-Attributes Operation
+    /// This operation allows a client to update settable Printer attributes.
+    /// See: RFC 8011 Section 4.4.15
+    /// </summary>
+    Task<SetPrinterAttributesResponse> SetPrinterAttributesAsync(SetPrinterAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resume-Printer Operation
+    /// This operation allows a client to resume the Printer object
+    /// scheduling jobs on all its devices.  The Printer object MUST remove
+    /// the 'paused' and 'moving-to-paused' values from the Printer object's
+    /// "printer-state-reasons" attribute, if present.  If there are no other
+    /// reasons to keep a device paused (such as media-jam), the IPP Printer
+    /// is free to transition itself to the 'processing' or 'idle' states,
+    /// depending on whether there are jobs to be processed or not,
+    /// respectively, and the device(s) resume processing jobs.
+    /// See: RFC 2911 Section 3.2.8
+    /// </summary>
+    Task<ResumePrinterResponse> ResumePrinterAsync(ResumePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Send-Document Operation
+    /// This OPTIONAL operation allows a client to create a multi-document
+    /// Job object that is initially "empty" (contains no documents).  In the
+    /// Create-Job response, the Printer object returns the Job object's URI
+    /// (the "job-uri" attribute) and the Job object's 32-bit identifier (the
+    /// "job-id" attribute).  For each new document that the client desires
+    /// to add, the client uses a Send-Document operation.  Each Send-
+    /// Document Request contains the entire stream of document data for one
+    /// document.
+    /// See: RFC 2911 Section 3.3.1
+    /// </summary>
+    Task<SendDocumentResponse> SendDocumentAsync(SendDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Send-URI Operation
+    /// DEPRECATED.
+    /// This OPTIONAL operation is identical to the Send-Document operation
+    /// except that a client MUST supply a URI reference
+    /// ("document-uri" operation attribute) rather than the document data
+    /// itself.  If a Printer object supports this operation, clients can use
+    /// both Send-URI or Send-Document operations to add new documents to an
+    /// existing multi-document Job object.  However, if a client needs to
+    /// indicate that the previous Send-URI or Send-Document was the last
+    /// document,  the client MUST use the Send-Document operation with no
+    /// document data and the "last-document" flag set to 'true' (rather than
+    /// using a Send-URI operation with no "document-uri" operation
+    /// attribute).
+    /// See: RFC 2911 Section 3.3.2
+    /// </summary>
+    [Obsolete("The 'Send-URI' operation is deprecated.")]
+    Task<SendUriResponse> SendUriAsync(SendUriRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validate-Document Operation.
+    /// This operation allows a client to validate operation and Document Template attributes
+    /// that would be used in a later Send-Document or Send-URI request.
+    /// <br/>
+    /// Deprecated/Obsolete Support: Note that this operation is deprecated for Print Services per PWG 5100.13-2023 Section 5.2, but remains required and supported for Scan Services per PWG 5100.17 Section 4.2.
+    /// See: PWG 5100.13-2023 Section 5.2
+    /// See: PWG 5100.17-2014 Section 4.2
+    /// </summary>
+    Task<ValidateDocumentResponse> ValidateDocumentAsync(ValidateDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validate-Job Operation
+    /// This REQUIRED operation is similar to the Print-Job operation
+    /// except that a client supplies no document data and
+    /// the Printer allocates no resources (i.e., it does not create a new
+    /// Job object).  This operation is used only to verify capabilities of a
+    /// printer object against whatever attributes are supplied by the client
+    /// in the Validate-Job request.  By using the Validate-Job operation a
+    /// client can validate that an identical Print-Job operation (with the
+    /// document data) would be accepted. The Validate-Job operation also
+    /// performs the same security negotiation as the Print-Job operation
+    /// (see section 8), so that a client can check that the client and
+    /// Printer object security requirements can be met before performing a
+    /// Print-Job operation.
+    /// See: RFC 2911 Section 3.2.3
+    /// </summary>
+    Task<ValidateJobResponse> ValidateJobAsync(ValidateJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-Jobs Operation
+    /// This operation allows a client to cancel multiple Jobs at once.
+    /// See: PWG 5100.7-2023
+    /// </summary>
+    Task<CancelJobsResponse> CancelJobsAsync(CancelJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-My-Jobs Operation
+    /// This operation allows a client to cancel multiple Jobs associated with the requesting user.
+    /// See: PWG 5100.7-2023
+    /// </summary>
+    Task<CancelMyJobsResponse> CancelMyJobsAsync(CancelMyJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resubmit-Job Operation
+    /// This operation allows a client to create a new Job based on an existing Job.
+    /// See: PWG 5100.7-2023
+    /// </summary>
+    Task<ResubmitJobResponse> ResubmitJobAsync(ResubmitJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Close-Job Operation
+    /// This operation allows a client to close a multi-document Job so that no more documents can be added.
+    /// See: PWG 5100.7-2023
+    /// </summary>
+    Task<CloseJobResponse> CloseJobAsync(CloseJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-Document Operation
+    /// This REQUIRED operation allows a client to cancel a Document from
+    /// the time the Document is created up to the time it is completed, canceled,
+    /// or aborted.
+    /// See: PWG 5100.5-2024 Section 5.1.1
+    /// </summary>
+    Task<CancelDocumentResponse> CancelDocumentAsync(CancelDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Document-Attributes Operation
+    /// This REQUIRED operation allows a client to request the values of
+    /// attributes of a Document object.
+    /// See: PWG 5100.5-2024 Section 5.1.2
+    /// </summary>
+    Task<GetDocumentAttributesResponse> GetDocumentAttributesAsync(GetDocumentAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Documents Operation
+    /// This REQUIRED operation allows a client to retrieve the list of Document
+    /// objects belonging to the target Job object.
+    /// See: PWG 5100.5-2024 Section 5.2.1
+    /// </summary>
+    Task<GetDocumentsResponse> GetDocumentsAsync(GetDocumentsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set-Document-Attributes Operation
+    /// This OPTIONAL operation allows a client to set the values of
+    /// attributes of a Document object.
+    /// See: PWG 5100.5-2024 Section 5.1.3
+    /// </summary>
+    Task<SetDocumentAttributesResponse> SetDocumentAttributesAsync(SetDocumentAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Acknowledge-Document Operation.
+    /// See: PWG 5100.18-2025 Section 5.1
+    /// </summary>
+    Task<AcknowledgeDocumentResponse> AcknowledgeDocumentAsync(AcknowledgeDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Acknowledge-Identify-Printer Operation.
+    /// See: PWG 5100.18-2025 Section 5.2
+    /// </summary>
+    Task<AcknowledgeIdentifyPrinterResponse> AcknowledgeIdentifyPrinterAsync(AcknowledgeIdentifyPrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Acknowledge-Job Operation.
+    /// See: PWG 5100.18-2025 Section 5.3
+    /// </summary>
+    Task<AcknowledgeJobResponse> AcknowledgeJobAsync(AcknowledgeJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deregister-Output-Device Operation.
+    /// See: PWG 5100.18-2025 Section 5.4
+    /// </summary>
+    Task<DeregisterOutputDeviceResponse> DeregisterOutputDeviceAsync(DeregisterOutputDeviceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetch-Document Operation.
+    /// See: PWG 5100.18-2025 Section 5.5
+    /// </summary>
+    Task<FetchDocumentResponse> FetchDocumentAsync(FetchDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetch-Job Operation.
+    /// See: PWG 5100.18-2025 Section 5.6
+    /// </summary>
+    Task<FetchJobResponse> FetchJobAsync(FetchJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Output-Device-Attributes Operation.
+    /// See: PWG 5100.18-2025 Section 6.1
+    /// See: PWG 5100.18-2025 Section 14.3
+    /// See: PWG 5100.18-2025 Section 14.4
+    /// </summary>
+    Task<GetOutputDeviceAttributesResponse> GetOutputDeviceAttributesAsync(GetOutputDeviceAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update-Active-Jobs Operation.
+    /// See: PWG 5100.18-2025 Section 5.7
+    /// </summary>
+    Task<UpdateActiveJobsResponse> UpdateActiveJobsAsync(UpdateActiveJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update-Document-Status Operation.
+    /// See: PWG 5100.18-2025 Section 5.8
+    /// </summary>
+    Task<UpdateDocumentStatusResponse> UpdateDocumentStatusAsync(UpdateDocumentStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update-Job-Status Operation.
+    /// See: PWG 5100.18-2025 Section 5.9
+    /// </summary>
+    Task<UpdateJobStatusResponse> UpdateJobStatusAsync(UpdateJobStatusRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update-Output-Device-Attributes Operation.
+    /// See: PWG 5100.18-2025 Section 5.10
+    /// </summary>
+    Task<UpdateOutputDeviceAttributesResponse> UpdateOutputDeviceAttributesAsync(UpdateOutputDeviceAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Allocate-Printer-Resources Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.1
+    /// </summary>
+    Task<AllocatePrinterResourcesResponse> AllocatePrinterResourcesAsync(AllocatePrinterResourcesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Printer Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.1
+    /// </summary>
+    Task<CreatePrinterResponse> CreatePrinterAsync(CreatePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-System-Attributes Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.8
+    /// </summary>
+    Task<GetSystemAttributesResponse> GetSystemAttributesAsync(GetSystemAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-System-Supported-Values Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.9
+    /// </summary>
+    Task<GetSystemSupportedValuesResponse> GetSystemSupportedValuesAsync(GetSystemSupportedValuesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Register-Output-Device Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.12
+    /// </summary>
+    Task<RegisterOutputDeviceResponse> RegisterOutputDeviceAsync(RegisterOutputDeviceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Resources Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.7
+    /// </summary>
+    Task<GetResourcesResponse> GetResourcesAsync(GetResourcesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Resource-Attributes Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.3
+    /// </summary>
+    Task<GetResourceAttributesResponse> GetResourceAttributesAsync(GetResourceAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-Resource Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.1
+    /// </summary>
+    Task<CancelResourceResponse> CancelResourceAsync(CancelResourceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Resource Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.2
+    /// </summary>
+    Task<CreateResourceResponse> CreateResourceAsync(CreateResourceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Install-Resource Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.4
+    /// </summary>
+    Task<InstallResourceResponse> InstallResourceAsync(InstallResourceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Send-Resource-Data Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.5
+    /// </summary>
+    Task<SendResourceDataResponse> SendResourceDataAsync(SendResourceDataRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set-Resource-Attributes Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.6
+    /// </summary>
+    Task<SetResourceAttributesResponse> SetResourceAttributesAsync(SetResourceAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deallocate-Printer-Resources Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.2
+    /// </summary>
+    Task<DeallocatePrinterResourcesResponse> DeallocatePrinterResourcesAsync(DeallocatePrinterResourcesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete-Printer Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.3 and 6.3.4
+    /// </summary>
+    Task<DeletePrinterResponse> DeletePrinterAsync(DeletePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.4
+    /// </summary>
+    Task<GetPrintersResponse> GetPrintersAsync(GetPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Printer-Resources Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.5
+    /// </summary>
+    Task<GetPrinterResourcesResponse> GetPrinterResourcesAsync(GetPrinterResourcesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Shutdown-One-Printer Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.7
+    /// </summary>
+    Task<ShutdownOnePrinterResponse> ShutdownOnePrinterAsync(ShutdownOnePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Startup-One-Printer Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.8
+    /// </summary>
+    Task<StartupOnePrinterResponse> StartupOnePrinterAsync(StartupOnePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Resource-Subscriptions Operation.
+    /// See: PWG 5100.22-2025 Section 6.2.2
+    /// </summary>
+    Task<CreateResourceSubscriptionsResponse> CreateResourceSubscriptionsAsync(CreateResourceSubscriptionsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-System-Subscriptions Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.3
+    /// </summary>
+    Task<CreateSystemSubscriptionsResponse> CreateSystemSubscriptionsAsync(CreateSystemSubscriptionsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-Subscription Operation.
+    /// See: RFC3995 in PWG 5100.22
+    /// </summary>
+    Task<CancelSubscriptionResponse> CancelSubscriptionAsync(CancelSubscriptionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Notifications Operation.
+    /// See: RFC3996 in PWG 5100.22
+    /// </summary>
+    Task<GetNotificationsResponse> GetNotificationsAsync(GetNotificationsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Subscription-Attributes Operation.
+    /// See: RFC3995 in PWG 5100.22
+    /// </summary>
+    Task<GetSubscriptionAttributesResponse> GetSubscriptionAttributesAsync(GetSubscriptionAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Subscriptions Operation.
+    /// See: RFC3995 in PWG 5100.22
+    /// </summary>
+    Task<GetSubscriptionsResponse> GetSubscriptionsAsync(GetSubscriptionsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Renew-Subscription Operation.
+    /// See: RFC3995 in PWG 5100.22
+    /// </summary>
+    Task<RenewSubscriptionResponse> RenewSubscriptionAsync(RenewSubscriptionRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Disable-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.5
+    /// </summary>
+    Task<DisableAllPrintersResponse> DisableAllPrintersAsync(DisableAllPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Enable-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.6
+    /// </summary>
+    Task<EnableAllPrintersResponse> EnableAllPrintersAsync(EnableAllPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pause-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.10
+    /// </summary>
+    Task<PauseAllPrintersResponse> PauseAllPrintersAsync(PauseAllPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pause-All-Printers-After-Current-Job Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.11
+    /// </summary>
+    Task<PauseAllPrintersAfterCurrentJobResponse> PauseAllPrintersAfterCurrentJobAsync(PauseAllPrintersAfterCurrentJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restart-System Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.13
+    /// </summary>
+    Task<RestartSystemResponse> RestartSystemAsync(RestartSystemRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resume-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.14
+    /// </summary>
+    Task<ResumeAllPrintersResponse> ResumeAllPrintersAsync(ResumeAllPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Set-System-Attributes Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.15
+    /// </summary>
+    Task<SetSystemAttributesResponse> SetSystemAttributesAsync(SetSystemAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Shutdown-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.16
+    /// </summary>
+    Task<ShutdownAllPrintersResponse> ShutdownAllPrintersAsync(ShutdownAllPrintersRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Startup-All-Printers Operation.
+    /// See: PWG 5100.22-2025 Section 6.3.17
+    /// </summary>
+    Task<StartupAllPrintersResponse> StartupAllPrintersAsync(StartupAllPrintersRequest request, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Restart-One-Printer Operation.
+    /// See: PWG 5100.22-2025 Section 6.1.6
+    /// </summary>
+    Task<RestartOnePrinterResponse> RestartOnePrinterAsync(RestartOnePrinterRequest request, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Get-User-Printer-Attributes Operation.
+    /// See: PWG 5100.11-2024 Section 5.1
+    /// </summary>
+    Task<GetUserPrinterAttributesResponse> GetUserPrinterAttributesAsync(GetUserPrinterAttributesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add-Document-Images Operation.
+    /// See: PWG 5100.15-2013 Section 6.4
+    /// </summary>
+    Task<AddDocumentImagesResponse> AddDocumentImagesAsync(AddDocumentImagesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Next-Document-Data Operation.
+    /// See: PWG 5100.17-2014 Section 6.1
+    /// </summary>
+    Task<GetNextDocumentDataResponse> GetNextDocumentDataAsync(GetNextDocumentDataRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Activate-Printer Operation.
+    /// This operation allows a client to activate a previously deactivated Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<ActivatePrinterResponse> ActivatePrinterAsync(ActivatePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deactivate-Printer Operation.
+    /// This operation allows a client to deactivate a Printer so that it stops accepting new jobs.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<DeactivatePrinterResponse> DeactivatePrinterAsync(DeactivatePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Disable-Printer Operation.
+    /// This operation allows a client to disable a Printer so that it stops accepting new jobs.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<DisablePrinterResponse> DisablePrinterAsync(DisablePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Enable-Printer Operation.
+    /// This operation allows a client to enable a previously disabled Printer so that it resumes accepting new jobs.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<EnablePrinterResponse> EnablePrinterAsync(EnablePrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get-Printer-Supported-Values Operation.
+    /// This operation allows a client to query the Printer for the set of values it supports for a given attribute.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// See: RFC 8011 Section 4.2
+    /// </summary>
+    Task<GetPrinterSupportedValuesResponse> GetPrinterSupportedValuesAsync(GetPrinterSupportedValuesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hold-New-Jobs Operation.
+    /// This operation allows a client to hold all new jobs submitted to the Printer in the 'pending-held' state.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<HoldNewJobsResponse> HoldNewJobsAsync(HoldNewJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pause-Printer-After-Current-Job Operation.
+    /// This operation allows a client to pause the Printer after the current job completes.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<PausePrinterAfterCurrentJobResponse> PausePrinterAfterCurrentJobAsync(PausePrinterAfterCurrentJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Release-Held-New-Jobs Operation.
+    /// This operation allows a client to release all jobs that were held by a previous Hold-New-Jobs operation.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<ReleaseHeldNewJobsResponse> ReleaseHeldNewJobsAsync(ReleaseHeldNewJobsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restart-Printer Operation.
+    /// This operation allows a client to restart a Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<RestartPrinterResponse> RestartPrinterAsync(RestartPrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Shutdown-Printer Operation.
+    /// This operation allows a client to shut down a Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<ShutdownPrinterResponse> ShutdownPrinterAsync(ShutdownPrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Startup-Printer Operation.
+    /// This operation allows a client to start up a previously shut-down Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<StartupPrinterResponse> StartupPrinterAsync(StartupPrinterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancel-Current-Job Operation.
+    /// This operation allows a client to cancel the job currently being processed by the Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<CancelCurrentJobResponse> CancelCurrentJobAsync(CancelCurrentJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Promote-Job Operation.
+    /// This operation allows a client to promote a job to the head of the queue.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<PromoteJobResponse> PromoteJobAsync(PromoteJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resume-Job Operation.
+    /// This operation allows a client to resume a previously suspended job.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<ResumeJobResponse> ResumeJobAsync(ResumeJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Schedule-Job-After Operation.
+    /// This operation allows a client to schedule a job to be processed after another specified job.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<ScheduleJobAfterResponse> ScheduleJobAfterAsync(ScheduleJobAfterRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Suspend-Current-Job Operation.
+    /// This operation allows a client to suspend the job currently being processed by the Printer.
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<SuspendCurrentJobResponse> SuspendCurrentJobAsync(SuspendCurrentJobRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete-Document Operation.
+    /// OBSOLETE.
+    /// This operation allows a client to delete a document from a job.
+    /// See: PWG 5100.5-2024 Section 14
+    /// See: PWG 5100.18-2025 Section 4.5 Note 3
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    [Obsolete("The 'Delete-Document' operation is obsolete. See PWG 5100.5-2024 and PWG 5100.18-2025.")]
+    Task<DeleteDocumentResponse> DeleteDocumentAsync(DeleteDocumentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Printer-Subscriptions Operation.
+    /// This operation allows a client to create one or more event subscriptions associated with a Printer object.
+    /// See: RFC 3995 Section 5.1
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<CreatePrinterSubscriptionsResponse> CreatePrinterSubscriptionsAsync(CreatePrinterSubscriptionsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create-Job-Subscriptions Operation.
+    /// This operation allows a client to create one or more event subscriptions associated with a Job object.
+    /// See: RFC 3995 Section 5.1
+    /// See: PWG 5100.15-2013 Section 4.2
+    /// </summary>
+    Task<CreateJobSubscriptionsResponse> CreateJobSubscriptionsAsync(CreateJobSubscriptionsRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// CUPS-Get-Printers Operation
+    /// The CUPS-Get-Printers operation (0x4002) returns the printer attributes for every printer known to the system. This
+    /// may include printers that are not served directly by the server.
+    /// See: CUPS Implementation of IPP
+    /// </summary>
+    Task<CUPSGetPrintersResponse> GetCUPSPrintersAsync(CUPSGetPrintersRequest request, CancellationToken cancellationToken = default);
+}

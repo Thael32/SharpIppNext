@@ -1,40 +1,36 @@
-﻿using System;
+using System;
 
-namespace SharpIpp.Protocol.Models
+namespace SharpIpp.Protocol.Models;
+
+public readonly struct Range(int lower, int upper, bool isValue = true) : IEquatable<Range>, INoValue
 {
-    public struct Range : IEquatable<Range>
+    public int Lower { get; } = lower;
+    public int Upper { get; } = upper;
+    public bool IsValue { get; } = isValue;
+
+    public override string ToString() => $"{Lower} - {Upper}";
+
+    public void Deconstruct(out int lower, out int upper)
     {
-        public int Lower { get; }
+        lower = Lower;
+        upper = Upper;
+    }
 
-        public int Upper { get; }
+    public bool Equals(Range other) => Lower == other.Lower && Upper == other.Upper;
 
-        public Range(int lower, int upper)
+    public override bool Equals(object? obj) => obj is Range other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        unchecked
         {
-            Lower = lower;
-            Upper = upper;
-        }
-
-        public override string ToString()
-        {
-            return $"{Lower} - {Upper}";
-        }
-
-        public bool Equals(Range other)
-        {
-            return Lower == other.Lower && Upper == other.Upper;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is Range other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                return (Lower * 397) ^ Upper;
-            }
+            return (Lower * 397) ^ Upper;
         }
     }
+
+    public static bool operator ==(Range left, Range right) => left.Equals(right);
+
+    public static bool operator !=(Range left, Range right) => !left.Equals(right);
+
+    public static implicit operator Range(int value) => new(value, value);
 }

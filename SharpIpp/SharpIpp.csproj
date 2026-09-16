@@ -1,11 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <NullableReferenceTypes>true</NullableReferenceTypes>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageIcon>ipp256.png</PackageIcon>
+    <PackageIconUrl />
+    <PackageProjectUrl>https://github.com/danielklecha/SharpIppNext</PackageProjectUrl>
+    <Authors>Daniel Klecha;Evgeny Zelenov</Authors>
+    <Description>C# implementation of IPP client and IPP server</Description>
+    <PackageTags>ipp, Internet Printing Protocol, rfc2911, print, printer, cups</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 	<PackageLicenseFile></PackageLicenseFile>
     <Copyright>Daniel Klecha and Evgeny Zelenov</Copyright>
@@ -13,28 +16,32 @@
     <RepositoryType>git</RepositoryType>
 	<Product>SharpIppNext</Product>
 	<PackageId>SharpIppNext</PackageId>
+	<Version>1.0.0.0</Version>
 	<IncludeSymbols>true</IncludeSymbols>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;0612</NoWarn>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <WarningLevel>8</WarningLevel>
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1701;1702;0612</NoWarn>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <WarningLevel>8</WarningLevel>
-  </PropertyGroup>
-   <ItemGroup>
+  <ItemGroup>
     <None Include="..\ipp256.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-	<None Include="..\README.md">
-		<Pack>True</Pack>
-		<PackagePath></PackagePath>
-	</None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <EmbeddedResource Include="ILLink.Descriptors.xml" LogicalName="ILLink.Descriptors.xml" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.ComponentModel.Annotations" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(SignAssembly)' != 'true'">
+    <InternalsVisibleTo Include="SharpIpp.Tests.Unit" />
+    <InternalsVisibleTo Include="SharpIpp.Tests.Integration" />
   </ItemGroup>
 </Project>

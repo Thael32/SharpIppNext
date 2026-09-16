@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="IBM437"?>
 <Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);618;612</NoWarn>
+  </PropertyGroup>
   <Import Project="./Global.props" />
 </Project>
