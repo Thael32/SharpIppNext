@@ -73,6 +73,7 @@ try
     var printJobresponse = await client.PrintJobAsync(printJobRequest);
     */
     Console.WriteLine("Success!");
+
 }
 catch (Exception ex)
 {
