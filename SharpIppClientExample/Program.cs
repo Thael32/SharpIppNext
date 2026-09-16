@@ -11,9 +11,29 @@ try
     var client = new SharpIppClient(httpClient);
     var request = new GetPrinterAttributesRequest()
     {
+        Version = new IppVersion(2, 0),
         OperationAttributes = new GetPrinterAttributesOperationAttributes
         {
-            PrinterUri = new Uri("ipp://192.168.0.197:631/ipp/print")
+            PrinterUri = new Uri("ipps://192.168.0.197:631/ipp/print"),
+            RequestedAttributes = [
+                PrinterAttribute.PrinterName,
+                PrinterAttribute.PrinterUuid,
+                PrinterAttribute.PrinterInfo,
+                PrinterAttribute.PrinterLocation,
+                PrinterAttribute.DocumentFormatDefault,
+                PrinterAttribute.DocumentFormatPreferred,
+                PrinterAttribute.DocumentFormatSupported,
+                PrinterAttribute.PrinterMakeAndModel,
+                PrinterAttribute.IppVersionsSupported,
+                PrinterAttribute.MopriaCertified,
+                PrinterAttribute.PrinterFirmwareName,
+                PrinterAttribute.PrinterFirmwareStringVersion,
+                PrinterAttribute.MediaSupported,
+                PrinterAttribute.MediaTypeSupported,
+                PrinterAttribute.PrinterUriSupported,
+                PrinterAttribute.UriSecuritySupported,
+                "printer-device-id"
+                ]
         }
     };
 

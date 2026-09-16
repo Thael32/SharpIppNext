@@ -12,6 +12,10 @@ namespace SharpIpp.Protocol.Models
         public const string PrinterLocation = "printer-location";
         public const string PrinterInfo = "printer-info";
         public const string PrinterMoreInfo = "printer-more-info";
+        public const string PrinterUuid = "printer-uuid";
+        public const string PrinterDnsSdName = "printer-dns-sd-name";
+        public const string PrinterFirmwareName = "printer-firmware-name";
+        public const string PrinterFirmwareStringVersion = "printer-firmware-string-version";
         public const string PrinterDriverInstaller = "printer-driver-installer";
         public const string PrinterMakeAndModel = "printer-make-and-model";
         public const string PrinterMoreInfoManufacturer = "printer-more-info-manufacturer";
@@ -73,6 +77,7 @@ namespace SharpIpp.Protocol.Models
         public const string PrintColorModeDefault = "print-color-mode-default";
         public const string PrintColorModeSupported = "print-color-mode-supported";
         public const string WhichJobsSupported = "which-jobs-supported";
+        public const string MopriaCertified = "mopria-certified";
 
         public static IEnumerable<string> GetAttributes(IppVersion version)
         {
@@ -84,6 +89,10 @@ namespace SharpIpp.Protocol.Models
             yield return PrinterLocation;
             yield return PrinterInfo;
             yield return PrinterMoreInfo;
+            yield return PrinterUuid;
+            yield return PrinterDnsSdName;
+            yield return PrinterFirmwareName;
+            yield return PrinterFirmwareStringVersion;
             yield return PrinterDriverInstaller;
             yield return PrinterMakeAndModel;
             yield return PrinterMoreInfoManufacturer;
@@ -142,6 +151,7 @@ namespace SharpIpp.Protocol.Models
             yield return PrintColorModeDefault;
             yield return PrintColorModeSupported;
             yield return WhichJobsSupported;
+            yield return MopriaCertified;
         }
     }
 }

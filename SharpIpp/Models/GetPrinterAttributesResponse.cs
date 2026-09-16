@@ -44,6 +44,26 @@ namespace SharpIpp.Models
         public string? PrinterMoreInfo { get; set; }
 
         /// <summary>
+        ///     printer-uuid
+        /// </summary>
+        public string? PrinterUuid { get; set; }
+
+        /// <summary>
+        ///     printer-dns-sd-name
+        /// </summary>
+        public string? PrinterDnsSdName { get; set; }
+
+        /// <summary>
+        ///     printer-firmware-name
+        /// </summary>
+        public string? PrinterFirmwareName { get; set; }
+
+        /// <summary>
+        ///     printer-firmare-string-version
+        /// </summary>
+        public string? PrinterFirmwareStringVersion { get; set; }
+
+        /// <summary>
         ///     printer-driver-installer
         /// </summary>
         public string? PrinterDriverInstaller { get; set; }
@@ -269,5 +289,7 @@ namespace SharpIpp.Models
         public PrintColorMode[]? PrintColorModeSupported { get; set; }
 
         public WhichJobs[]? WhichJobsSupported { get; set; }
+
+        public string? MopriaCertified { get; set; }
     }
 }

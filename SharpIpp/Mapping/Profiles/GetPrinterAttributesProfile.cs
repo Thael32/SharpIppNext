@@ -96,6 +96,10 @@ namespace SharpIpp.Mapping.Profiles
                     PrinterMoreInfoManufacturer =
                         map.MapFromDic<string?>(src, PrinterAttribute.PrinterMoreInfoManufacturer),
                     PrinterName = map.MapFromDic<string?>(src, PrinterAttribute.PrinterName),
+                    PrinterUuid = map.MapFromDic<string?>(src, PrinterAttribute.PrinterUuid),
+                    PrinterDnsSdName = map.MapFromDic<string?>(src, PrinterAttribute.PrinterDnsSdName),
+                    PrinterFirmwareName = map.MapFromDic<string?>(src, PrinterAttribute.PrinterFirmwareName),
+                    PrinterFirmwareStringVersion = map.MapFromDic<string?>(src, PrinterAttribute.PrinterFirmwareStringVersion),
                     PrinterState = map.MapFromDic<PrinterState?>(src, PrinterAttribute.PrinterState),
                     PrinterStateMessage = map.MapFromDic<string?>(src, PrinterAttribute.PrinterStateMessage),
                     PrinterStateReasons =
@@ -140,6 +144,7 @@ namespace SharpIpp.Mapping.Profiles
                     PrintColorModeDefault = map.MapFromDic<PrintColorMode?>(src, PrinterAttribute.PrintColorModeDefault),
                     PrintColorModeSupported = map.MapFromDicSetNull<PrintColorMode[]?>(src, PrinterAttribute.PrintColorModeSupported),
                     WhichJobsSupported = map.MapFromDicSetNull<WhichJobs[]?>(src, PrinterAttribute.WhichJobsSupported),
+                    MopriaCertified = map.MapFromDic<string?>(src, PrinterAttribute.MopriaCertified),
                 } );
 
             mapper.CreateMap<GetPrinterAttributesResponse, IDictionary<string, IppAttribute[]>>( ( src, map ) =>
@@ -207,6 +212,14 @@ namespace SharpIpp.Mapping.Profiles
                         dic.Add( PrinterAttribute.PrinterMoreInfoManufacturer, new IppAttribute[] { new IppAttribute( Tag.Uri, PrinterAttribute.PrinterMoreInfoManufacturer, src.PrinterMoreInfoManufacturer ) } );
                     if ( src.PrinterName != null )
                         dic.Add( PrinterAttribute.PrinterName, new IppAttribute[] { new IppAttribute( Tag.NameWithoutLanguage, PrinterAttribute.PrinterName, src.PrinterName ) } );
+                    if ( src.PrinterUuid != null )
+                        dic.Add(PrinterAttribute.PrinterUuid, new IppAttribute[] { new IppAttribute(Tag.Uri, PrinterAttribute.PrinterUuid, src.PrinterUuid) });
+                    if ( src.PrinterDnsSdName != null )
+                        dic.Add(PrinterAttribute.PrinterDnsSdName, new IppAttribute[] { new IppAttribute(Tag.NameWithoutLanguage, PrinterAttribute.PrinterDnsSdName, src.PrinterDnsSdName) });
+                    if ( src.PrinterFirmwareName != null )
+                        dic.Add(PrinterAttribute.PrinterFirmwareName, new IppAttribute[] { new IppAttribute(Tag.NameWithoutLanguage, PrinterAttribute.PrinterFirmwareName, src.PrinterFirmwareName) });
+                    if ( src.PrinterFirmwareStringVersion != null )
+                        dic.Add(PrinterAttribute.PrinterFirmwareStringVersion, new IppAttribute[] { new IppAttribute(Tag.NameWithoutLanguage, PrinterAttribute.PrinterFirmwareStringVersion, src.PrinterFirmwareStringVersion) });
                     if ( src.PrinterState != null )
                         dic.Add( PrinterAttribute.PrinterState, new IppAttribute[] { new IppAttribute( Tag.Enum, PrinterAttribute.PrinterState, (int)src.PrinterState.Value ) } );
                     if ( src.PrinterStateMessage != null )
@@ -235,7 +248,7 @@ namespace SharpIpp.Mapping.Profiles
                         dic.Add( PrinterAttribute.MediaSupported, src.MediaSupported.Select( x => new IppAttribute( Tag.Keyword, PrinterAttribute.MediaSupported, x ) ).ToArray() );
                     if ( src.MediaTypeSupported?.Any() ?? false )
                         dic.Add(PrinterAttribute.MediaTypeSupported, src.MediaTypeSupported.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.MediaTypeSupported, x)).ToArray());
-                    if ( src.MediaSupported?.Any() ?? false )
+                    if ( src.MediaReady?.Any() ?? false )
                         dic.Add(PrinterAttribute.MediaReady, src.MediaReady.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.MediaReady, x)).ToArray());
                     if ( src.SidesDefault != null )
                         dic.Add( PrinterAttribute.SidesDefault, new IppAttribute[] { new IppAttribute( Tag.Keyword, PrinterAttribute.SidesDefault, map.Map<string>( src.SidesDefault ) ) } );
@@ -283,6 +296,8 @@ namespace SharpIpp.Mapping.Profiles
                         dic.Add(PrinterAttribute.PrintColorModeSupported, src.PrintColorModeSupported.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.PrintColorModeSupported, map.Map<string>(x))).ToArray());
                     if (src.WhichJobsSupported?.Any() ?? false)
                         dic.Add(PrinterAttribute.WhichJobsSupported, src.WhichJobsSupported.Select(x => new IppAttribute(Tag.Keyword, PrinterAttribute.WhichJobsSupported, map.Map<string>(x))).ToArray());
+                    if ( src.MopriaCertified != null )
+                        dic.Add(PrinterAttribute.MopriaCertified, new IppAttribute[] { new IppAttribute(Tag.NameWithoutLanguage, PrinterAttribute.MopriaCertified, src.MopriaCertified) });
                     return dic;
                 } );
         }

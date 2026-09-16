@@ -6,7 +6,7 @@
     <PackageIcon>ipp256.png</PackageIcon>
     <PackageIconUrl />
     <PackageProjectUrl>https://github.com/danielklecha/SharpIppNext</PackageProjectUrl>
-    <Authors>Daniel Klecha;Evgeny Zelenov</Authors>
+    <Authors>Daniel Klecha;Evgeny Zelenov;Paweł Słuja</Authors>
     <Description>C# implementation of IPP client and IPP server</Description>
     <PackageTags>ipp, Internet Printing Protocol, rfc2911, print, printer, cups</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
